@@ -1,145 +1,172 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Riesgo país · Monitor Fiscal POPULI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="comun.css">
-<script src="lib/echarts.min.js"></script>
-<script src="comun.js"></script>
-<style>.card.bajo { margin-top: 16px; min-height: 0; } #region { height: 440px; }</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riesgo País · Populi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="estilo.css" />
+  <style>#region{height:430px}@media(max-width:500px){#region{height:400px}}</style>
+  <script src="lib/echarts.min.js"></script>
+  <script src="base.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="hd">
-    <h1 class="hd-t">Riesgo país</h1>
-    <p class="hd-s">Cuánto más que el Tesoro de Estados Unidos exige el mercado para prestarle a Bolivia: el spread del índice EMBI, en puntos básicos (100 pb = 1 punto porcentual de tasa).</p>
-  </div>
-  <div class="ctl">
-    <div class="ctl-g"><span class="ctl-l">Período</span><div class="seg" id="c-rango"></div></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div class="leyenda" id="leyenda"></div>
-      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="sec-title"><span class="accent-bar"></span>Riesgo País</div>
+      <div class="sec-sub">Cuánto más que el Tesoro de Estados Unidos exige el mercado para prestarle a Bolivia: spread del índice EMBI en puntos básicos (100 pb = 1 punto porcentual de tasa)</div>
     </div>
-    <aside class="lect">
-      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
-      <div class="lect-bd" id="lectura"></div>
-    </aside>
-  </div>
-  <div class="card bajo">
-    <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:1.05rem;margin-bottom:6px">Riesgo país en la región</h2>
-    <div class="leyenda" id="leyenda2"></div>
-    <div id="region"></div>
-  </div>
-  <details class="notas">
-    <summary>Cómo se mide</summary>
-    <div>
-      <p>El <strong>EMBI Global Diversified</strong> de J.P. Morgan mide el rendimiento de los bonos soberanos en dólares de cada país por encima del de los bonos del Tesoro de Estados Unidos de plazo similar. Sube cuando el mercado ve más probable que el país no pague.</p>
-      <p>La serie diaria la publica el Banco Central de la República Dominicana. Bolivia aparece desde noviembre de 2012, cuando colocó su primer bono soberano. El scraper descarta la copia vieja de la misma página, que quedó congelada en octubre de 2024.</p>
+
+    <div class="hz-bar">
+      <span class="hz-lbl">Rango:</span><div class="hz-grp" id="b-rango"></div>
     </div>
-  </details>
-  <div class="fuente">
-    <span>Fuente: J.P. Morgan, vía <a id="f-bcrd" target="_blank" rel="noopener">Banco Central de la República Dominicana</a>. Elaboración: Centro de Estudios POPULI.</span>
-    <span id="f-corte"></span>
+
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <div class="chart-ctrl"><div class="tog-grp" id="pastillas"></div></div>
+        <div id="chart"><div class="loading"><div class="spinner"></div><span style="font-size:.8rem">Cargando riesgo país…</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-hd-t">Lectura del indicador</span><span class="panel-hd-d" id="panel-fecha"></span></div>
+        <div class="panel-body" id="panel"></div>
+        <div class="panel-ft"><a href="../index.html" target="_blank" class="amp"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ampliar análisis</a></div>
+      </div>
+    </div>
+
+    <div class="sub-card">
+      <h3>Riesgo país en la región</h3>
+      <div class="sec-sub" id="region-sub"></div>
+      <div id="region"></div>
+    </div>
+
+    <div class="edu-grid" id="preguntas"></div>
+    <div class="source"><span class="source-txt" id="fuente"></span></div>
   </div>
-</div>
-<script>
-(function () {
-  const estado = { rango: '2017' };
-  const el = document.getElementById('chart');
-  PF.cargar(['embi.json']).then(function (r) {
-    const e = r[0], F = e.fechas, S = e.series, n = F.length - 1;
-    document.getElementById('f-bcrd').href = e.meta.pagina;
-    document.getElementById('f-corte').textContent = 'Datos al ' + PF.dia(e.meta.ultimo_dato) + '.';
-    document.getElementById('corte').textContent = PF.dia(e.meta.ultimo_dato);
 
-    const desde = function () {
-      if (estado.rango === 'todo') return 0;
-      if (estado.rango === '2017') return F.findIndex(function (f) { return f >= '2017-01-01'; });
-      const d = new Date(F[n] + 'T00:00:00'); d.setFullYear(d.getFullYear() - (estado.rango === '1a' ? 1 : 3));
-      const iso = d.toISOString().slice(0, 10);
-      return F.findIndex(function (f) { return f >= iso; });
-    };
-    const g = PF.montar(el, function () {
-      const c = PF.c(), i0 = desde(), X = F.slice(i0);
-      const lineas = [['Bolivia', c.neg, 2.2], ['Latinoamérica', c.g1, 1.5], ['Global', c.g3, 1.5]];
-      PF.leyenda(document.getElementById('leyenda'), lineas.map(function (l) { return { nombre: l[0], color: l[1], forma: 'linea' }; }));
-      return {
-        animationDuration: 400,
-        grid: PF.grid({ top: 16, right: PF.pequeño() ? 14 : 40 }),
-        tooltip: PF.tooltip({ formatter: function (ps) {
-          return '<b>' + PF.dia(X[ps[0].dataIndex]) + '</b>' + ps.map(function (p) {
-            return PF.fila(p.color, p.seriesName, p.value == null ? '—' : PF.num(p.value, 0) + ' pb', 'linea'); }).join('');
-        } }),
-        // Series largas: un rótulo por año, en su primer día hábil. Cortas: uno por trimestre.
-        xAxis: PF.ejeX(X, { boundaryGap: false, axisLabel: { color: c.muted, fontSize: 10.5,
-          interval: function (i) {
-            if (i === 0) return false;
-            const cambia = X.length > 800 ? X[i].slice(0, 4) !== X[i - 1].slice(0, 4) : X[i].slice(0, 7) !== X[i - 1].slice(0, 7) && ['01', '04', '07', '10'].indexOf(X[i].slice(5, 7)) >= 0;
-            return cambia && (!PF.pequeño() || X.length <= 800 || (+X[i].slice(0, 4)) % 2 === 1);
-          },
-          formatter: function (v) { return X.length > 800 ? v.slice(0, 4) : PF.MESES[+v.slice(5, 7) - 1] + ' ' + v.slice(2, 4); } } }),
-        yAxis: PF.ejeY(function (v) { return PF.num(v, 0); }),
-        series: lineas.map(function (l) {
-          return { type: 'line', name: l[0], data: S[l[0]].slice(i0), showSymbol: false, sampling: 'lttb', connectNulls: false,
-                   lineStyle: { color: l[1], width: l[2] }, itemStyle: { color: l[1] }, z: l[0] === 'Bolivia' ? 5 : 2,
-                   endLabel: { show: !PF.pequeño() && l[0] === 'Bolivia', color: c.ink, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600,
-                               formatter: function (p) { return PF.num(p.value, 0); } } };
-        })
+  <script>
+  (function () {
+    const C = PF.C;
+    const estado = { rango: '2017', idx: null };
+    const SERIES = [
+      { k: 'Bolivia', nombre: 'Bolivia', color: C.rojo, ancho: 2.5 },
+      { k: 'Latinoamérica', nombre: 'Latinoamérica', color: C.turquesa, ancho: 2 },
+      { k: 'Global', nombre: 'Global', color: C.gris, ancho: 2 }
+    ];
+    const activas = new Set(SERIES.map(function (s) { return s.k; }));
+
+    PF.cargar(['embi.json']).then(function (r) {
+      const e = r[0], F = e.fechas, S = e.series, n = F.length - 1;
+      const bol = S.Bolivia, lat = S['Latinoamérica'];
+      // Índice del último dato con valor en o antes de una fecha (los feriados vienen vacíos).
+      const hasta = function (iso) { let i = F.length - 1; while (i > 0 && (F[i] > iso || bol[i] == null)) i--; return i; };
+      const hace = function (anios) { const d = new Date(F[n] + 'T00:00:00'); d.setFullYear(d.getFullYear() - anios); return d.toISOString().slice(0, 10); };
+      const i1 = hasta(e.region.fecha_hace_un_anio);
+      let iMax = 0; bol.forEach(function (v, i) { if (v != null && v > bol[iMax]) iMax = i; });
+      const pos = e.region.paises.findIndex(function (p) { return p.pais === 'Bolivia'; }) + 1;
+
+      document.getElementById('kpis').innerHTML =
+        PF.kpi(C.rojo, 'Bolivia hoy', PF.num(bol[n], 0) + ' pb', PF.dia(F[n]), 'flat') +
+        PF.kpi(C.rojoOscuro, 'Hace un año', PF.num(bol[i1], 0) + ' pb', PF.signo(bol[n] - bol[i1], 0) + ' pb desde entonces', bol[n] < bol[i1] ? 'down' : 'up') +
+        PF.kpi(C.oro, 'Máximo de la serie', PF.num(bol[iMax], 0) + ' pb', PF.dia(F[iMax]), 'flat') +
+        PF.kpi(C.turquesa, 'Veces Latinoamérica', PF.num(bol[n] / lat[n], 1) + '×', 'Promedio regional: ' + PF.num(lat[n], 0) + ' pb', 'flat');
+
+      const i0 = function () {
+        if (estado.rango === 'todo') return 0;
+        if (estado.rango === '2017') return F.findIndex(function (f) { return f >= '2017-01-01'; });
+        const iso = hace(estado.rango === '1a' ? 1 : 3);
+        return F.findIndex(function (f) { return f >= iso; });
       };
-    });
-    PF.segmento(document.getElementById('c-rango'), [['1a', '1 año'], ['3a', '3 años'], ['2017', 'Desde 2017'], ['todo', 'Desde 2012']], estado.rango,
-      function (v) { estado.rango = v; g.redibujar(); });
 
-    // Región: barra = hoy; cuadrado hueco = hace un año. Bolivia en rojo, el resto gris.
-    const R = e.region.paises.slice().reverse();
-    PF.montar(document.getElementById('region'), function () {
-      const c = PF.c();
-      PF.leyenda(document.getElementById('leyenda2'), [{ nombre: 'Hoy (' + PF.dia(e.region.fecha) + ')', color: c.g2 },
-        { nombre: 'Bolivia', color: c.neg }, { nombre: 'Hace un año', color: c.ink, forma: 'punto' }]);
-      return {
-        animationDuration: 400,
-        grid: PF.grid({ top: 6, right: 18 }),
-        tooltip: PF.tooltip({ axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } }, formatter: function (ps) {
-          const p = R[ps[0].dataIndex];
-          return '<b>' + p.pais + '</b>' + PF.fila(p.pais === 'Bolivia' ? c.neg : c.g2, 'Hoy', PF.num(p.pb, 0) + ' pb') +
-            PF.fila(c.ink, 'Hace un año', PF.num(p.pb_hace_un_anio, 0) + ' pb', 'linea');
-        } }),
-        xAxis: PF.ejeY(function (v) { return PF.num(v, 0); }, { splitNumber: 4 }),
-        // La cifra de hoy va junto al nombre, en el eje: no puede chocar con la barra ni con el cuadrado.
-        yAxis: PF.ejeX(R.map(function (p) { return p.pais; }), { axisLabel: { color: c.ink, fontSize: 11, fontFamily: 'Inter, system-ui, sans-serif',
-          formatter: function (v, i) { return '{p|' + v + '}  {n|' + PF.num(R[i].pb, 0) + '}'; },
-          rich: { p: { color: c.ink, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, fontWeight: 600 },
-                  n: { color: c.muted, fontFamily: 'JetBrains Mono', fontSize: 10.5, width: 30, align: 'right' } } } }),
-        series: [
-          { type: 'bar', data: R.map(function (p) { return { value: p.pb, itemStyle: { color: p.pais === 'Bolivia' ? c.neg : c.g2 } }; }),
-            barCategoryGap: '30%' },
-          { type: 'scatter', data: R.map(function (p) { return p.pb_hace_un_anio; }), symbol: 'rect', symbolSize: 9,
-            itemStyle: { color: c.card, borderColor: c.ink, borderWidth: 2 }, z: 5 }
-        ]
-      };
-    });
+      function opciones() {
+        const d = PF.dk(), a = i0(), X = F.slice(a), largo = X.length > 800, peq = PF.pequeno();
+        return {
+          grid: { left: 52, right: peq ? 16 : 48, top: 18, bottom: 34 },
+          xAxis: PF.ejeX(X, { boundaryGap: false, axisLabel: { fontFamily: 'Inter', fontSize: 10, fontWeight: 500, color: d ? '#555' : '#64748B',
+            // Series largas: un rótulo por año (cada dos en el teléfono). Cortas: uno por trimestre.
+            interval: function (i) {
+              if (i === 0) return false;
+              if (largo) return X[i].slice(0, 4) !== X[i - 1].slice(0, 4) && (!peq || (+X[i].slice(0, 4)) % 2 === 1);
+              return X[i].slice(0, 7) !== X[i - 1].slice(0, 7) && (peq ? ['01', '07'] : ['01', '04', '07', '10']).indexOf(X[i].slice(5, 7)) >= 0;
+            },
+            formatter: function (v) { return largo ? v.slice(0, 4) : PF.MES[+v.slice(5, 7) - 1] + ' ' + v.slice(2, 4); } } }),
+          yAxis: PF.ejeY(function (v) { return PF.num(v, 0); }),
+          tooltip: PF.tooltip(function (ps) {
+            const i = a + ps[0].dataIndex;
+            panel(i);
+            let t = PF.ttTitulo(PF.dia(F[i]));
+            ps.forEach(function (q) { t += PF.ttFila(q.color, q.seriesName, q.value == null ? '—' : PF.num(q.value, 0) + ' pb'); });
+            return bol[i] != null && lat[i] ? t + PF.ttPie('Bolivia paga <strong style="color:#fff">' + PF.num(bol[i] / lat[i], 1) + ' veces</strong> el promedio latinoamericano') : t;
+          }, { axisPointer: { type: 'line', lineStyle: { color: d ? '#475569' : '#94A3B8', type: 'dashed' } } }),
+          series: SERIES.filter(function (s) { return activas.has(s.k); }).map(function (s) {
+            return { type: 'line', name: s.nombre, data: S[s.k].slice(a), showSymbol: false, sampling: 'lttb', connectNulls: true,
+              lineStyle: { color: s.color, width: s.ancho }, itemStyle: { color: s.color }, z: s.k === 'Bolivia' ? 5 : 2,
+              areaStyle: s.k === 'Bolivia' ? { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(199,30,29,' + (d ? .22 : .14) + ')' }, { offset: 1, color: 'rgba(199,30,29,0)' }]) } : undefined,
+              endLabel: { show: !peq, color: s.color, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 700, formatter: function (p) { return PF.num(p.value, 0); } } };
+          })
+        };
+      }
+      const g = PF.montar(document.getElementById('chart'), opciones);
+      PF.pastillas(document.getElementById('pastillas'), SERIES, activas, function () { g.redibujar(); });
+      PF.botonera(document.getElementById('b-rango'), [['1a', '1A'], ['3a', '3A'], ['2017', 'Desde 2017'], ['todo', 'Desde 2012']], estado.rango,
+        function (v) { estado.rango = v; g.redibujar(); });
 
-    const bol = S.Bolivia, lat = S['Latinoamérica'];
-    const iAnio = F.findIndex(function (f) { return f >= e.region.fecha_hace_un_anio; });
-    const max = Math.max.apply(null, bol.filter(function (v) { return v != null; })), iMax = bol.indexOf(max);
-    const pos = e.region.paises.findIndex(function (p) { return p.pais === 'Bolivia'; }) + 1;
-    let h = '<div class="dato"><div class="dato-l">Bolivia, ' + PF.dia(F[n]) + '</div>' +
-      '<div class="dato-v neg">' + PF.num(bol[n], 0) + '<small>pb</small></div>' +
-      '<div class="dato-d">Hace un año: <strong>' + PF.num(bol[iAnio], 0) + ' pb</strong> (' + PF.signo(bol[n] - bol[iAnio], 0) + ' pb).</div></div>';
-    h += '<div class="dato"><div class="dato-l">Contra la región</div>' +
-      '<div class="dato-v">' + PF.num(bol[n] / lat[n], 1) + ' veces</div>' +
-      '<div class="dato-d">el promedio latinoamericano (' + PF.num(lat[n], 0) + ' pb). Bolivia es el ' + pos + '.º más alto de ' + e.region.paises.length + ' países de la región.</div></div>';
-    h += '<div class="dato"><div class="dato-l">Máximo de la serie</div>' +
-      '<div class="dato-v">' + PF.num(max, 0) + '<small>pb</small></div>' +
-      '<div class="dato-d">El ' + PF.dia(F[iMax]) + '.</div></div>';
-    document.getElementById('lectura').innerHTML = h;
-  }).catch(function (err) { PF.error(el, err); });
-})();
-</script>
+      function panel(i) {
+        if (i === null || i === undefined) i = n;
+        if (bol[i] == null) return;
+        estado.idx = i;
+        document.getElementById('panel-fecha').textContent = PF.dia(F[i]);
+        const iso = ((+F[i].slice(0, 4)) - 1) + F[i].slice(4), j = hasta(iso);
+        let t = PF.pb(C.rojo, 'Bolivia', PF.num(bol[i], 0) + ' pb', F[j] <= iso && bol[j] != null ? PF.signo(bol[i] - bol[j], 0) + ' pb en un año (' + PF.num(bol[j], 0) + ' pb el ' + PF.dia(F[j]) + ').' : '');
+        t += PF.pb(C.turquesa, 'Latinoamérica', PF.num(lat[i], 0) + ' pb', 'Bolivia: ' + PF.num(bol[i] / lat[i], 1) + ' veces el promedio de la región.');
+        t += PF.pb(C.grisOscuro, 'Global', PF.num(S.Global[i], 0) + ' pb', 'Promedio de todos los países emergentes del índice.');
+        const tasa = bol[i] / 100;
+        const c = 'El <strong>' + PF.dia(F[i]) + '</strong>, para colocar un bono en dólares Bolivia habría tenido que pagar unos <strong>' + PF.num(tasa, 1) + ' puntos porcentuales</strong> de interés por encima del Tesoro de Estados Unidos.' +
+          (i === iMax ? ' Es el máximo de toda la serie.' : bol[i] >= 1000 ? ' Por encima de 1.000 pb el mercado lee el bono como en riesgo de impago.' : '');
+        document.getElementById('panel').innerHTML = t + PF.ctx(c);
+      }
+      panel(n);
+
+      // Región: barra = hoy; cuadrado hueco = hace un año. Bolivia en rojo, el resto gris.
+      document.getElementById('region-sub').innerHTML = 'Barra: ' + PF.dia(e.region.fecha) + '. Cuadrado: un año antes (' + PF.dia(e.region.fecha_hace_un_anio) + '). Puntos básicos. Bolivia tiene la ' + pos + '.ª cifra más alta de ' + e.region.paises.length + ' países.';
+      const R = e.region.paises.slice().reverse();
+      PF.montar(document.getElementById('region'), function () {
+        const d = PF.dk(), tinta = PF.tinta();
+        return {
+          // Margen fijo: con rótulos «rich» containLabel mide mal y corta el nombre más largo.
+          grid: { left: 136, right: 18, top: 6, bottom: 26 },
+          tooltip: PF.tooltip(function (ps) {
+            const p = R[ps[0].dataIndex];
+            return PF.ttTitulo(p.pais) + PF.ttFila(p.pais === 'Bolivia' ? C.rojo : C.gris, 'Hoy', PF.num(p.pb, 0) + ' pb') +
+              PF.ttFila('#E2DDD3', 'Hace un año', PF.num(p.pb_hace_un_anio, 0) + ' pb') + PF.ttPie('Cambio: <strong style="color:#fff">' + PF.signo(p.pb - p.pb_hace_un_anio, 0) + ' pb</strong>');
+          }),
+          xAxis: PF.ejeY(function (v) { return PF.num(v, 0); }, { splitNumber: PF.pequeno() ? 3 : 4 }),
+          // La cifra de hoy va junto al nombre, en el eje: no choca con la barra ni con el cuadrado.
+          yAxis: PF.ejeX(R.map(function (p) { return p.pais; }), { axisLine: { show: false }, axisLabel: {
+            formatter: function (v, i) { return '{' + (v === 'Bolivia' ? 'b' : 'p') + '|' + v + '}  {n|' + PF.num(R[i].pb, 0) + '}'; },
+            rich: { p: { color: d ? '#CBD5E1' : '#334155', fontFamily: 'Inter', fontSize: 11, fontWeight: 500 },
+                    b: { color: C.rojo, fontFamily: 'Inter', fontSize: 11, fontWeight: 800 },
+                    n: { color: d ? '#94A3B8' : '#64748B', fontFamily: 'JetBrains Mono', fontSize: 10.5, width: 30, align: 'right' } } } }),
+          series: [
+            { type: 'bar', barCategoryGap: '32%', data: R.map(function (p) { return { value: p.pb, itemStyle: { color: p.pais === 'Bolivia' ? C.rojo : (d ? '#475569' : '#CBD5E1') } }; }) },
+            { type: 'scatter', symbol: 'rect', symbolSize: 9, z: 5, data: R.map(function (p) { return p.pb_hace_un_anio; }),
+              itemStyle: { color: d ? '#141414' : '#fff', borderColor: tinta, borderWidth: 2 } }
+          ]
+        };
+      });
+
+      PF.preguntas(document.getElementById('preguntas'), [
+        ['¿Qué mide el EMBI?', 'El <strong>EMBI Global Diversified</strong> de J.P. Morgan compara el rendimiento de los bonos soberanos en dólares de cada país con el de los bonos del Tesoro de Estados Unidos de plazo similar. Sube cuando el mercado ve más probable que el país no pague.'],
+        ['¿Por qué importa si Bolivia casi no emite bonos?', 'Porque es el precio al que el mundo le prestaría hoy. Con un spread alto, salir a los mercados para refinanciar vencimientos o conseguir dólares se vuelve prohibitivo, y el Estado depende más del crédito del BCB y de los multilaterales.'],
+        ['¿Desde cuándo hay dato?', 'Bolivia entra al índice el ' + PF.dia(F[0]) + ', cuando colocó su primer bono soberano. La serie diaria la publica el Banco Central de la República Dominicana; se descarta la copia vieja de la misma página, que quedó congelada en octubre de 2024.'],
+        ['¿Qué pasa en los feriados?', 'Los días sin cotización vienen vacíos en la fuente: la línea los salta y el panel muestra el último día con dato.']
+      ]);
+      document.getElementById('fuente').innerHTML = 'Fuente: J.P. Morgan, vía <a href="' + e.meta.pagina + '" target="_blank">Banco Central de la República Dominicana</a> · Elaboración: Centro de Estudios POPULI · Datos al: ' + PF.dia(e.meta.ultimo_dato);
+    }).catch(function (err) { document.getElementById('chart').innerHTML = '<div class="loading" style="color:#C71E1D">No se pudieron cargar los datos: ' + err.message + '</div>'; });
+  })();
+  </script>
 </body>
 </html>

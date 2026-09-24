@@ -1,132 +1,136 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deuda interna del Tesoro · Monitor Fiscal POPULI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="comun.css">
-<script src="lib/echarts.min.js"></script>
-<script src="comun.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deuda Interna del Tesoro · Populi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="estilo.css" />
+  <script src="lib/echarts.min.js"></script>
+  <script src="base.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="hd">
-    <h1 class="hd-t">Deuda interna del Tesoro</h1>
-    <p class="hd-s">Saldo de la deuda del Tesoro General de la Nación con acreedores dentro del país, a fin de cada mes, en millones de bolivianos: quién tiene los papeles del Tesoro.</p>
-  </div>
-  <div class="ctl">
-    <div class="ctl-g"><span class="ctl-l">Ver</span><div class="seg" id="c-vista"></div></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div class="leyenda" id="leyenda"></div>
-      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="sec-title"><span class="accent-bar"></span>Deuda Interna del Tesoro</div>
+      <div class="sec-sub">Saldo de la deuda del Tesoro General de la Nación con acreedores dentro del país, a fin de mes (millones de Bs): quién tiene los papeles del Tesoro</div>
     </div>
-    <aside class="lect">
-      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
-      <div class="lect-bd" id="lectura"></div>
-    </aside>
-  </div>
-  <details class="notas">
-    <summary>Cómo se calcula y qué no muestra</summary>
-    <div>
-      <p>Saldos del MEFP (Viceministerio del Tesoro y Crédito Público). La página del MEFP publica esta serie <strong>desde diciembre de 2022</strong>; lo anterior no está disponible en el mismo formato.</p>
-      <p><strong>Fondos de pensiones.</strong> La línea «AFPs» del MEFP corresponde a los viejos Bonos AFP y hoy está en cero. Los bonos del Tesoro que compran los fondos de pensiones en subasta quedan dentro de <strong>«Mercado financiero (subasta)»</strong>, sin separar al comprador. El BCB publica cuánto le prestan al Gobierno Central las «otras sociedades financieras» (fondos de pensiones, aseguradoras y fondos de inversión, juntos): ver la lectura.</p>
-      <p><strong>El BCB registra más que el MEFP.</strong> El crédito bruto del BCB al Gobierno Central supera todos los meses a la deuda del TGN con el BCB que informa el MEFP<span id="brecha"></span>. Las fuentes publicadas no permiten atribuir la diferencia.</p>
-      <p>Controles: cada nivel (instrumento, tenedor, sector) suma el de arriba; el cierre de diciembre de cada archivo coincide con la apertura del siguiente; los meses que todavía no pasaron (que el archivo trae en cero) se descartan.</p>
-    </div>
-  </details>
-  <div class="fuente">
-    <span>Fuente: <a id="f-mefp" target="_blank" rel="noopener">MEFP, deuda interna del TGN</a> · <a id="f-bcb" target="_blank" rel="noopener">BCB</a>. Elaboración: Centro de Estudios POPULI.</span>
-    <span id="f-corte"></span>
-  </div>
-</div>
-<script>
-(function () {
-  const estado = { vista: 'tenedor' };
-  const el = document.getElementById('chart');
-  const VISTAS = {
-    tenedor: [['publico_financiero.bcb', 'Banco Central de Bolivia', 'neg'],
-              ['privado.mercado_financiero', 'Mercado financiero (subasta)', 'pos'],
-              ['privado.fondos', 'Fondos', 'c3'],
-              ['resto', 'Otros tenedores', 'g2']],
-    bcb: [['publico_financiero.bcb.bt_no_negociables', 'Bonos no negociables', 'neg'],
-          ['publico_financiero.bcb.bt_negociables', 'Bonos negociables', 'c3'],
-          ['publico_financiero.bcb.bt_credito_emergencia', 'Crédito de emergencia', 'g1'],
-          ['historica', 'Deuda histórica (letras A y B)', 'g2'],
-          ['publico_financiero.bcb.titulos_bcb', 'Títulos BCB', 'g3']]
-  };
 
-  PF.cargar(['deuda_interna.json', 'bcb_osf.json', 'conciliacion.json', 'bcb_financiamiento.json']).then(function (r) {
-    const di = r[0], osf = r[1], conc = r[2], bf = r[3];
-    const M = di.meses, S = di.series;
-    const val = function (k, i) {
-      if (k === 'resto') return di.total[i] - S['publico_financiero.bcb'][i] - S['privado.mercado_financiero'][i] - S['privado.fondos'][i];
-      if (k === 'historica') return S['publico_financiero.bcb.deuda_historica_a'][i] + S['publico_financiero.bcb.deuda_historica_b'][i];
-      return S[k][i];
+    <div class="hz-bar">
+      <span class="hz-lbl">Ver:</span><div class="hz-grp" id="b-vista"></div>
+      <span class="hz-lbl" style="margin-left:8px">Medida:</span><div class="hz-grp" id="b-medida"></div>
+    </div>
+
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <div class="chart-ctrl"><div class="tog-grp" id="pastillas"></div></div>
+        <div id="chart"><div class="loading"><div class="spinner"></div><span style="font-size:.8rem">Cargando…</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-hd-t">Quién le presta al Tesoro</span><span class="panel-hd-d" id="panel-fecha"></span></div>
+        <div class="panel-body" id="panel"></div>
+        <div class="panel-ft"><a href="../index.html" target="_blank" class="amp"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ampliar análisis</a></div>
+      </div>
+    </div>
+
+    <div class="edu-grid" id="preguntas"></div>
+    <div class="source"><span class="source-txt" id="fuente"></span></div>
+  </div>
+
+  <script>
+  (function () {
+    const C = PF.C;
+    const estado = { vista: 'tenedor', medida: 'bs', idx: null };
+    // El BCB en la familia roja; el mercado en la turquesa: de un vistazo, cuánto del Tesoro
+    // se financia con emisión y cuánto con ahorro.
+    const VISTAS = {
+      tenedor: [['publico_financiero.bcb', 'Banco Central', C.rojo], ['privado.mercado_financiero', 'Mercado (subasta)', C.turquesa],
+                ['privado.fondos', 'Fondos', C.oro], ['resto', 'Otros', C.gris]],
+      bcb: [['publico_financiero.bcb.bt_no_negociables', 'BCB · bonos no negociables', C.rojo], ['publico_financiero.bcb.bt_negociables', 'BCB · bonos negociables', C.rojoClaro],
+            ['publico_financiero.bcb.bt_credito_emergencia', 'BCB · crédito de emergencia', C.rojoOscuro], ['historica', 'BCB · deuda histórica y títulos', C.oro],
+            ['privado', 'Sector privado', C.petroleo], ['resto2', 'Otros', C.gris]]
     };
-    const br = conc.interna_resumen;
-    document.getElementById('brecha').textContent = ': entre ' + PF.mes(br.desde) + ' y ' + PF.mes(br.hasta) + ', la diferencia fue de Bs ' +
-      PF.num(br.minimo, 0) + ' a ' + PF.num(br.maximo, 0) + ' millones (' + PF.num(br.como_porcentaje_del_credito, 1) + ' % del crédito en promedio)';
-    document.getElementById('f-mefp').href = di.meta.pagina;
-    document.getElementById('f-bcb').href = osf.meta.pagina;
-    document.getElementById('f-corte').textContent = 'Datos a ' + PF.mesLargo(di.meta.ultimo_mes) + ' (preliminar).';
-    document.getElementById('corte').textContent = PF.mes(M[M.length - 1]);
+    let activas;
 
-    const g = PF.montar(el, function () {
-      const c = PF.c(), partes = VISTAS[estado.vista];
-      PF.leyenda(document.getElementById('leyenda'), partes.map(function (p) { return { nombre: p[1], color: c[p[2]] }; }));
-      return {
-        animationDuration: 500,
-        grid: PF.grid({ top: 20 }),
-        tooltip: PF.tooltip({
-          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } },
-          formatter: function (ps) {
-            const i = ps[0].dataIndex;
-            const tot = estado.vista === 'tenedor' ? di.total[i] : S['publico_financiero.bcb'][i];
-            return '<b>' + PF.mes(M[i]) + '</b> · millones de Bs' +
-              partes.slice().reverse().map(function (p) { return PF.fila(c[p[2]], p[1], PF.num(val(p[0], i), 0)); }).join('') +
-              '<div style="border-top:1px solid ' + c.line + ';margin-top:4px;padding-top:2px">' +
-              PF.fila(c.ink, estado.vista === 'tenedor' ? 'Total' : 'Total con el BCB', PF.num(tot, 0), 'linea') + '</div>';
-          }
-        }),
-        xAxis: PF.ejeX(M.map(PF.mes), { axisLabel: { color: c.muted, fontSize: 10.5,
-          interval: function (i) { return M[i].endsWith('-12') || (!PF.pequeño() && M[i].endsWith('-06')); },
-          formatter: function (v) { return PF.pequeño() ? v.slice(-4) : v; } } }),
-        yAxis: PF.ejeY(function (v) { return PF.num(v / 1000, 0) + ' mil'; }),
-        series: partes.map(function (p) {
-          return { type: 'bar', stack: 'x', name: p[1], barCategoryGap: '18%',
-                   itemStyle: { color: c[p[2]], borderColor: c.card, borderWidth: 0.5 },
-                   emphasis: { focus: 'series' }, data: M.map(function (_, i) { return val(p[0], i); }) };
-        })
+    PF.cargar(['deuda_interna.json', 'bcb_osf.json', 'conciliacion.json', 'indicadores.json']).then(function (r) {
+      const di = r[0], osf = r[1], conc = r[2], ind = r[3];
+      const M = di.meses, S = di.series, N = M.length - 1;
+      const val = function (k, i) {
+        if (k === 'resto') return di.total[i] - S['publico_financiero.bcb'][i] - S['privado.mercado_financiero'][i] - S['privado.fondos'][i];
+        if (k === 'historica') return S['publico_financiero.bcb.deuda_historica_a'][i] + S['publico_financiero.bcb.deuda_historica_b'][i] + S['publico_financiero.bcb.titulos_bcb'][i];
+        if (k === 'resto2') return di.total[i] - S['publico_financiero.bcb'][i] - S['privado'][i];
+        return S[k][i];
       };
-    });
-    PF.segmento(document.getElementById('c-vista'), [['tenedor', 'Por tenedor'], ['bcb', 'Deuda con el BCB']], estado.vista,
-      function (v) { estado.vista = v; g.redibujar(); });
+      const medida = function (v, i) { return estado.medida === 'pct' ? 100 * v / di.total[i] : v; };
+      const j12 = M.indexOf((+M[N].slice(0, 4) - 1) + M[N].slice(4));
+      const bcb = S['publico_financiero.bcb'], priv = S['privado'];
+      const ua = ind.anual[ind.anual.length - 1];
 
-    const n = M.length - 1, j = M.indexOf(M[n].slice(0, 4) - 1 + '-' + M[n].slice(5));
-    const tot = di.total[n], bcb = S['publico_financiero.bcb'][n];
-    const o = osf.meses.length - 1, dicOsf = di.meses.indexOf(osf.meses[o]);
-    let h = '<div class="dato"><div class="dato-l">Deuda interna del TGN, ' + PF.mes(M[n]) + '</div>' +
-      '<div class="dato-v">Bs ' + PF.num(tot, 0) + '<small>millones</small></div>' +
-      '<div class="dato-d">' + (j >= 0 ? 'Doce meses antes: Bs ' + PF.num(di.total[j], 0) + ' millones (' + PF.signo(100 * (tot / di.total[j] - 1), 1) + ' %). ' : '') +
-      'En ' + PF.mes(M[0]) + ': Bs ' + PF.num(di.total[0], 0) + ' millones.</div></div>';
-    h += '<div class="dato"><div class="dato-l">En manos del Banco Central</div>' +
-      '<div class="dato-v neg">' + PF.num(100 * bcb / tot, 0) + ' %<small>del total</small></div>' +
-      '<div class="dato-d">Bs ' + PF.num(bcb, 0) + ' millones; el ' + PF.num(100 * S['publico_financiero.bcb.bt_no_negociables'][n] / bcb, 0) +
-      ' % de eso en bonos <strong>no negociables</strong>: papeles que el BCB recibe del Tesoro y que no se venden en el mercado. En ' +
-      PF.mes(M[0]) + ' era el ' + PF.num(100 * S['publico_financiero.bcb'][0] / di.total[0], 0) + ' %.</div></div>';
-    if (dicOsf >= 0) {
-      h += '<div class="dato"><div class="dato-l">Fondos de pensiones, seguros y fondos de inversión</div>' +
-        '<div class="dato-v">Bs ' + PF.num(osf.series.credito_neto_gobierno_central[o], 0) + '<small>millones</small></div>' +
-        '<div class="dato-d">Crédito neto de las «otras sociedades financieras» al Gobierno Central, ' + PF.mes(osf.meses[o]) +
-        ' (BCB). Ese mes el MEFP registraba Bs ' + PF.num(S['privado'][dicOsf], 0) + ' millones de deuda del TGN con el sector privado: las magnitudes son parecidas, pero el BCB no separa a los fondos de pensiones del resto de esas entidades.</div></div>';
-    }
-    document.getElementById('lectura').innerHTML = h;
-  }).catch(function (e) { PF.error(el, e); });
-})();
-</script>
+      document.getElementById('kpis').innerHTML =
+        PF.kpi(PF.tinta(), 'Deuda interna del TGN', PF.num(di.total[N], 0) + ' MM', PF.mes(M[N]) + (j12 >= 0 ? ' · ' + PF.signo(100 * (di.total[N] / di.total[j12] - 1), 1) + '% 12m' : ''), 'up') +
+        PF.kpi(C.rojo, 'En manos del BCB', PF.num(100 * bcb[N] / di.total[N], 0) + '%', PF.num(bcb[N], 0) + ' MM · ' + PF.mes(M[0]) + ': ' + PF.num(100 * bcb[0] / di.total[0], 0) + '%', 'up') +
+        PF.kpi(C.turquesa, 'Sector privado', PF.num(priv[N], 0) + ' MM', PF.num(100 * priv[N] / di.total[N], 0) + '% del total', 'flat') +
+        PF.kpi(C.rojoOscuro, 'Deuda bruta del TGN', PF.num(ua.deuda_bruta_tgn.pib, 1) + '% PIB', 'interna + externa · dic ' + ua.anio, 'up');
+
+      function opciones() {
+        const d = PF.dk(), partes = VISTAS[estado.vista];
+        return {
+          grid: { left: 62, right: 18, top: 18, bottom: 40 },
+          xAxis: PF.ejeTiempo(M),
+          yAxis: PF.ejeY(function (v) { return estado.medida === 'pct' ? PF.num(v, 0) + '%' : PF.corto(v) + ' MM'; }, estado.medida === 'pct' ? { max: 100 } : {}),
+          tooltip: PF.tooltip(function (ps) {
+            const i = ps[0].dataIndex; panel(i);
+            let h = PF.ttTitulo(PF.mes(M[i]));
+            ps.slice().reverse().forEach(function (q) { h += PF.ttFila(q.color, q.seriesName, estado.medida === 'pct' ? PF.num(q.value, 1) + '%' : PF.num(q.value, 0) + ' MM Bs'); });
+            return h + PF.ttPie('Total: <strong style="color:#fff">' + PF.num(di.total[i], 0) + ' MM Bs</strong>');
+          }, { axisPointer: { type: 'line', lineStyle: { color: d ? '#475569' : '#94A3B8', type: 'dashed' } } }),
+          series: partes.filter(function (pt) { return activas.has(pt[0]); }).map(function (pt) {
+            return { name: pt[1], type: 'line', stack: 'x', smooth: true, smoothMonotone: 'x', symbol: 'none', lineStyle: { width: 0 },
+                     areaStyle: { color: pt[2], opacity: d ? 0.88 : 0.92 }, itemStyle: { color: pt[2] }, emphasis: { focus: 'series' },
+                     data: M.map(function (_, i) { return medida(val(pt[0], i), i); }) };
+          })
+        };
+      }
+      activas = new Set(VISTAS.tenedor.map(function (p) { return p[0]; }));
+      const g = PF.montar(document.getElementById('chart'), opciones);
+      function pastillas() {
+        activas = new Set(VISTAS[estado.vista].map(function (p) { return p[0]; }));
+        PF.pastillas(document.getElementById('pastillas'), VISTAS[estado.vista].map(function (p) { return { k: p[0], nombre: p[1], color: p[2] }; }), activas, function () { g.redibujar(); });
+      }
+      pastillas();
+      PF.botonera(document.getElementById('b-vista'), [['tenedor', 'Por tenedor'], ['bcb', 'Papeles del BCB']], estado.vista, function (x) { estado.vista = x; pastillas(); g.redibujar(); });
+      PF.botonera(document.getElementById('b-medida'), [['bs', 'Millones de Bs'], ['pct', '% del total']], estado.medida, function (x) { estado.medida = x; g.redibujar(); });
+
+      function panel(i) {
+        if (i === null || i === undefined) i = N;
+        estado.idx = i;
+        document.getElementById('panel-fecha').textContent = PF.mes(M[i]);
+        const tot = di.total[i], nn = S['publico_financiero.bcb.bt_no_negociables'][i];
+        let h = PF.pb(C.rojo, 'Banco Central de Bolivia', PF.num(bcb[i], 0) + ' MM Bs', '<strong>' + PF.num(100 * bcb[i] / tot, 1) + '%</strong> del total; ' + PF.num(100 * nn / bcb[i], 0) + '% de eso en bonos <strong>no negociables</strong>.') +
+                PF.pb(C.turquesa, 'Mercado (subasta)', PF.num(S['privado.mercado_financiero'][i], 0) + ' MM Bs', 'Bonos «C» vendidos en subasta: sobre todo los compran los fondos de pensiones (ver el gráfico de pensiones).') +
+                PF.pb(PF.tinta(), 'Total', PF.num(tot, 0) + ' MM Bs', 'En ' + PF.mes(M[0]) + ': ' + PF.num(di.total[0], 0) + ' MM Bs.');
+        const crec = di.total[i] - di.total[0], crecB = bcb[i] - bcb[0];
+        const t = i > 0 ? 'Desde ' + PF.mes(M[0]) + ' la deuda interna del Tesoro creció <strong>' + PF.num(crec, 0) + ' millones de Bs</strong>, y <strong>' + PF.num(100 * crecB / crec, 0) +
+          ' de cada 100</strong> los puso el Banco Central. Un bono que el BCB recibe del Tesoro se paga con dinero nuevo: es la forma en que el déficit termina en emisión.' :
+          'Punto de partida de la serie que publica el MEFP.';
+        document.getElementById('panel').innerHTML = h + PF.ctx(t);
+      }
+      panel(N);
+
+      const br = conc.interna_resumen, o = osf.meses.length - 1;
+      PF.preguntas(document.getElementById('preguntas'), [
+        ['¿Qué son los bonos no negociables?', 'Bonos que el Tesoro entrega al Banco Central y que <strong>no se venden en el mercado</strong>: el BCB los guarda hasta su vencimiento. Son la vía directa por la que el Banco Central financia al Tesoro.'],
+        ['¿Y los fondos de pensiones?', 'La línea «AFPs» del MEFP corresponde a los viejos Bonos AFP y hoy está en cero. Lo que los fondos compran en subasta queda dentro de «Mercado (subasta)» sin separar al comprador. Con la cartera que publica la APS se estima que tienen la mayor parte: ver el gráfico de pensiones. El BCB registra <strong>' + PF.num(osf.series.credito_neto_gobierno_central[o], 0) + ' millones de Bs</strong> de crédito de fondos de pensiones, aseguradoras y fondos de inversión al Gobierno Central (' + PF.mes(osf.meses[o]) + ').'],
+        ['¿Coinciden el BCB y el MEFP?', 'No del todo: el crédito bruto del BCB al Gobierno Central supera todos los meses a la deuda del Tesoro con el BCB que informa el MEFP. Entre ' + PF.mes(br.desde) + ' y ' + PF.mes(br.hasta) + ' la diferencia fue de Bs ' + PF.num(br.minimo, 0) + ' a ' + PF.num(br.maximo, 0) + ' millones (' + PF.num(br.como_porcentaje_del_credito, 1) + '% del crédito). Con lo publicado no se puede atribuir.'],
+        ['¿Por qué empieza en 2022?', 'Es lo que publica el MEFP en su página: los cierres de 2023, 2024 y 2025 y los meses del año en curso, cada uno con el diciembre anterior. Los cierres se empalman y se verifica que coincidan.']
+      ]);
+      document.getElementById('fuente').innerHTML = 'Fuente: <a href="' + di.meta.pagina + '" target="_blank">MEFP — Deuda interna del TGN</a> · <a href="' + osf.meta.pagina + '" target="_blank">BCB</a> · Elaboración: Centro de Estudios POPULI · Datos al: ' + PF.mes(di.meta.ultimo_mes) + ' (preliminar)';
+    }).catch(function (e) { document.getElementById('chart').innerHTML = '<div class="loading" style="color:#C71E1D">No se pudieron cargar los datos: ' + e.message + '</div>'; });
+  })();
+  </script>
 </body>
 </html>

@@ -1,140 +1,163 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Deuda externa pública · Monitor Fiscal POPULI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="comun.css">
-<script src="lib/echarts.min.js"></script>
-<script src="comun.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deuda Externa Pública · Populi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="estilo.css" />
+  <style>:root{--c-accent:#0A9396}.hz-btn.active{box-shadow:0 2px 8px rgba(10,147,150,.25)}#acreedores{height:360px}</style>
+  <script src="lib/echarts.min.js"></script>
+  <script src="base.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="hd">
-    <h1 class="hd-t">Deuda externa pública</h1>
-    <p class="hd-s">Saldo de la deuda pública externa de mediano y largo plazo al cierre de cada trimestre, en millones de dólares: a quién se le debe y quién la debe.</p>
-  </div>
-  <div class="ctl">
-    <div class="ctl-g"><span class="ctl-l">Por</span><div class="seg" id="c-corte"></div></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div class="leyenda" id="leyenda"></div>
-      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="sec-title"><span class="accent-bar"></span>Deuda Externa Pública</div>
+      <div class="sec-sub">Saldo de la deuda pública externa de mediano y largo plazo al cierre de cada trimestre (millones de USD): a quién se le debe y quién la debe</div>
     </div>
-    <aside class="lect">
-      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
-      <div class="lect-bd" id="lectura"></div>
-    </aside>
-  </div>
-  <details class="notas">
-    <summary>Cómo se calcula y por qué hay dos fuentes</summary>
-    <div>
-      <p>El gráfico usa el registro del <strong>BCB</strong> (deuda pública externa de mediano y largo plazo), que cubre a todos los deudores públicos. El detalle por país acreedor del Tesoro sale del <strong>MEFP</strong>, porque el BCB agrupa a China dentro de «otros bilaterales».</p>
-      <p><strong>Las dos fuentes coinciden:</strong> la deuda externa del TGN que publica el MEFP y la del Gobierno Central que registra el BCB son iguales al cierre de cada trimestre<span id="coincide"></span>. Cuando el MEFP revisa un cierre de diciembre, el revisado es el del BCB.</p>
-      <p><strong>En % del PIB</strong> la deuda se pasa a bolivianos al tipo de cambio oficial de compra<span id="tc"></span> y se divide por el PIB nominal del año (INE, base 2017).</p>
-      <p>Antes de publicar se verifica que las partes sumen su total y que el total por deudor sea igual al total por acreedor en cada período.</p>
-    </div>
-  </details>
-  <div class="fuente">
-    <span>Fuente: <a id="f-bcb" target="_blank" rel="noopener">BCB, deuda externa pública</a> · <a id="f-mefp" target="_blank" rel="noopener">MEFP, deuda externa del TGN</a> · INE. Elaboración: Centro de Estudios POPULI.</span>
-    <span id="f-corte"></span>
-  </div>
-</div>
-<script>
-(function () {
-  const estado = { corte: 'acreedor' };
-  const el = document.getElementById('chart');
-  const DESDE = '2017-T1';
-  const PARTES = {
-    acreedor: [['multilateral', 'Multilaterales (BID, CAF, Banco Mundial…)', 'pos'], ['bilateral', 'Bilaterales (China, Francia…)', 'c3'],
-               ['titulos_de_deuda', 'Bonos soberanos', 'neg'], ['privados', 'Bancos y otros privados', 'g2']],
-    deudor: [['gobierno_central', 'Gobierno Central (TGN)', 'pos'], ['empresas_publicas', 'Empresas públicas', 'c3'],
-             ['gobiernos_locales', 'Gobernaciones y municipios', 'g1'], ['resto', 'Resto (financieras, garantizada)', 'g3']]
-  };
 
-  PF.cargar(['deuda_externa.json', 'deuda_externa_tgn.json', 'indicadores.json', 'conciliacion.json']).then(function (r) {
-    const de = r[0], tgn = r[1], ind = r[2], conc = r[3];
-    const T = { a: de.trimestral.saldo_acreedor, d: de.trimestral.saldo_deudor };
-    const i0 = T.a.periodos.indexOf(DESDE);
-    const per = T.a.periodos.slice(i0);
-    const val = function (k, i) {
-      if (estado.corte === 'acreedor') return T.a[k][i0 + i];
-      if (k === 'resto') return T.d.total[i0 + i] - T.d.gobierno_central[i0 + i] - T.d.empresas_publicas[i0 + i] - T.d.gobiernos_locales[i0 + i];
-      return T.d[k][i0 + i];
+    <div class="hz-bar">
+      <span class="hz-lbl">Por:</span><div class="hz-grp" id="b-corte"></div>
+      <span class="hz-lbl" style="margin-left:8px">Rango:</span><div class="hz-grp" id="b-rango"></div>
+    </div>
+
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <div class="chart-ctrl"><div class="tog-grp" id="pastillas"></div></div>
+        <div id="chart"><div class="loading"><div class="spinner"></div><span style="font-size:.8rem">Cargando…</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd" style="background:#005F73"><span class="panel-hd-t">Composición de la deuda</span><span class="panel-hd-d" id="panel-fecha" style="color:#94D2BD;background:rgba(10,147,150,.25)"></span></div>
+        <div class="panel-body" id="panel"></div>
+        <div class="panel-ft"><a href="../index.html" target="_blank" class="amp"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ampliar análisis</a></div>
+      </div>
+    </div>
+
+    <div class="sub-card">
+      <h3>A quién le debe el Tesoro</h3>
+      <div class="sec-sub" id="sub-acre"></div>
+      <div id="acreedores"></div>
+    </div>
+
+    <div class="edu-grid" id="preguntas"></div>
+    <div class="source"><span class="source-txt" id="fuente"></span></div>
+  </div>
+
+  <script>
+  (function () {
+    const C = PF.C;
+    const estado = { corte: 'acreedor', rango: '2017', idx: null };
+    const PARTES = {
+      acreedor: [['multilateral', 'Multilaterales', C.turquesa], ['bilateral', 'Bilaterales', C.oro], ['titulos_de_deuda', 'Bonos soberanos', C.rojo], ['privados', 'Bancos privados', C.gris]],
+      deudor: [['gobierno_central', 'Tesoro (Gob. Central)', C.turquesa], ['empresas_publicas', 'Empresas públicas', C.oro], ['gobiernos_locales', 'Gobernaciones y municipios', C.naranja], ['resto', 'Resto', C.gris]]
     };
-    const tc = ind.meta.tipo_cambio;
-    document.getElementById('tc').textContent = ' (Bs ' + PF.num(tc.fijo, 2) + ' por dólar hasta el ' + PF.dia(tc.hasta) + '; después, el tipo de cambio oficial vigente)';
-    const ce = conc.externa, dmax = Math.max.apply(null, ce.map(function (x) { return Math.abs(x.diferencia); }));
-    document.getElementById('coincide').textContent = ' (' + ce.length + ' trimestres desde el ' + PF.trim(ce[0].periodo) +
-      '; la mayor diferencia, ' + PF.num(dmax, 1) + ' millones de dólares)';
-    document.getElementById('f-bcb').href = de.meta.pagina;
-    document.getElementById('f-mefp').href = tgn.meta.pagina;
-    document.getElementById('f-corte').textContent = 'BCB a ' + PF.trim(de.meta.ultimo_trimestre) + ' · MEFP a ' + PF.mesLargo(tgn.meta.ultimo_mes) + '.';
-    document.getElementById('corte').textContent = PF.trim(per[per.length - 1]);
+    let activas;
 
-    const g = PF.montar(el, function () {
-      const c = PF.c(), partes = PARTES[estado.corte];
-      PF.leyenda(document.getElementById('leyenda'), partes.map(function (p) { return { nombre: p[1], color: c[p[2]] }; }));
-      return {
-        animationDuration: 500,
-        grid: PF.grid({ top: 20 }),
-        tooltip: PF.tooltip({
-          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } },
-          formatter: function (ps) {
-            const i = ps[0].dataIndex;
-            return '<b>' + PF.trim(per[i]) + '</b> · millones de dólares' +
-              partes.slice().reverse().map(function (p) { return PF.fila(c[p[2]], p[1], PF.num(val(p[0], i), 0)); }).join('') +
-              '<div style="border-top:1px solid ' + c.line + ';margin-top:4px;padding-top:2px">' +
-              PF.fila(c.ink, 'Total', PF.num(T.a.total[i0 + i], 0), 'linea') + '</div>';
-          }
-        }),
-        xAxis: PF.ejeX(per.map(PF.trim), { axisLabel: { color: c.muted, fontSize: 10.5, interval: function (i) { return per[i].endsWith('T4') && (!PF.pequeño() || (+per[i].slice(0, 4)) % 2 === 1); },
-                                            formatter: function (v) { return v.slice(-4); } } }),
-        yAxis: PF.ejeY(function (v) { return PF.num(v / 1000, 0) + ' mil'; }),
-        series: partes.map(function (p) {
-          return { type: 'bar', stack: 'x', name: p[1], barCategoryGap: '22%',
-                   itemStyle: { color: c[p[2]], borderColor: c.card, borderWidth: per.length > 60 ? 0 : 0.5 },
-                   emphasis: { focus: 'series' }, data: per.map(function (_, i) { return val(p[0], i); }) };
-        })
+    PF.cargar(['deuda_externa.json', 'deuda_externa_tgn.json', 'indicadores.json', 'conciliacion.json']).then(function (r) {
+      const de = r[0], tgn = r[1], ind = r[2], conc = r[3];
+      const T = { acreedor: de.trimestral.saldo_acreedor, deudor: de.trimestral.saldo_deudor }, P = T.acreedor.periodos, N = P.length - 1;
+      const val = function (k, i) {
+        const t = T[estado.corte];
+        if (k === 'resto') return t.total[i] - t.gobierno_central[i] - t.empresas_publicas[i] - t.gobiernos_locales[i];
+        return t[k][i];
       };
-    });
-    PF.segmento(document.getElementById('c-corte'), [['acreedor', 'Acreedor'], ['deudor', 'Deudor']], estado.corte,
-      function (v) { estado.corte = v; g.redibujar(); });
+      const inicio = function () {
+        if (estado.rango === 'todo') return 0;
+        if (estado.rango === '5a') return Math.max(0, N - 19);
+        return P.indexOf('2017-T1');
+      };
+      const A = ind.anual, ua = A[A.length - 1];
+      const iAnio = N - 4, ult = tgn.meses.length - 1, china = tgn.series['bilateral.china'];
+      const chinaMax = Math.max.apply(null, china), iChinaMax = china.indexOf(chinaMax);
 
-    // Lectura: saldo, % del PIB, acreedores del TGN (MEFP, con China).
-    const n = per.length - 1, tot = T.a.total[i0 + n], hace = T.a.total[i0 + n - 4];
-    const A = ind.anual, u = A[A.length - 1], p0 = A[0];
-    const ult = tgn.meses.length - 1;
-    const acre = Object.keys(tgn.series).filter(function (k) { return k.split('.').length === 2 && tgn.series[k][ult]; })
-      .map(function (k) { return { k: k.split('.')[1], v: tgn.series[k][ult] }; })
-      .sort(function (a, b) { return b.v - a.v; }).slice(0, 7);
-    let h = '<div class="dato"><div class="dato-l">Saldo al ' + PF.trim(per[n]) + '</div>' +
-      '<div class="dato-v">US$ ' + PF.num(tot, 0) + '<small>millones</small></div>' +
-      '<div class="dato-d">Un año antes: US$ ' + PF.num(hace, 0) + ' millones (' + PF.signo(100 * (tot / hace - 1), 1) + ' %).</div></div>';
-    // El máximo del ratio y, sólo si corresponde, por qué bajó desde entonces.
-    const conDeuda = A.filter(function (a) { return a.deuda_externa; });
-    const pico = conDeuda.reduce(function (m, a) { return a.deuda_externa.total_pib > m.deuda_externa.total_pib ? a : m; });
-    let expl = '';
-    if (pico.anio < u.anio && u.deuda_externa.total_pib < pico.deuda_externa.total_pib && u.deuda_externa.usd.total > pico.deuda_externa.usd.total) {
-      expl = ' Desde ' + pico.anio + ' el ratio baja aunque el saldo en dólares sube (' + PF.signo(100 * (u.deuda_externa.usd.total / pico.deuda_externa.usd.total - 1), 0) +
-        ' %): el PIB nominal crece más rápido que la deuda convertida a un tipo de cambio fijo.';
-    }
-    h += '<div class="dato"><div class="dato-l">En % del PIB, fin de ' + u.anio + '</div>' +
-      '<div class="dato-v">' + PF.num(u.deuda_externa.total_pib, 1) + ' %</div>' +
-      '<div class="dato-d">En ' + p0.anio + ': ' + PF.num(p0.deuda_externa.total_pib, 1) + ' %. Máximo: <strong>' + PF.num(pico.deuda_externa.total_pib, 1) +
-      ' %</strong> en ' + pico.anio + '.' + expl + '</div></div>';
-    h += '<div class="dato"><div class="dato-l">Acreedores del Tesoro, ' + PF.mes(tgn.meses[ult]) + ' (MEFP)</div>' +
-      '<div class="tabla-wrap"><table class="t"><thead><tr><th>Acreedor</th><th>US$ MM</th><th>%</th></tr></thead><tbody>' +
-      acre.map(function (a) {
-        return '<tr><td>' + (tgn.meta.nombres[a.k] || a.k) + '</td><td>' + PF.num(a.v, 0) + '</td><td>' +
-          PF.num(100 * a.v / tgn.series.total[ult], 1) + '</td></tr>';
-      }).join('') + '</tbody></table></div></div>';
-    document.getElementById('lectura').innerHTML = h;
-  }).catch(function (e) { PF.error(el, e); });
-})();
-</script>
+      document.getElementById('kpis').innerHTML =
+        PF.kpi(C.turquesa, 'Deuda externa pública', PF.num(T.acreedor.total[N], 0) + ' MM USD', PF.trim(P[N]) + ' · ' + PF.signo(100 * (T.acreedor.total[N] / T.acreedor.total[iAnio] - 1), 1) + '% 12m', T.acreedor.total[N] > T.acreedor.total[iAnio] ? 'up' : 'down') +
+        PF.kpi(PF.tinta(), 'En % del PIB', PF.num(ua.deuda_externa.total_pib, 1) + '%', 'fin de ' + ua.anio + ' · a Bs ' + PF.num(ua.deuda_externa.tc, 2), 'flat') +
+        PF.kpi(C.rojo, 'Bonos soberanos', PF.num(T.acreedor.titulos_de_deuda[N], 0) + ' MM USD', PF.num(100 * T.acreedor.titulos_de_deuda[N] / T.acreedor.total[N], 1) + '% del total', 'flat') +
+        PF.kpi(C.oro, 'China (Tesoro)', PF.num(china[ult], 0) + ' MM USD', 'máx. ' + PF.num(chinaMax, 0) + ' en ' + PF.mes(tgn.meses[iChinaMax]), china[ult] < chinaMax ? 'down' : 'up');
+
+      function opciones() {
+        const d = PF.dk(), i0 = inicio(), X = P.slice(i0), partes = PARTES[estado.corte];
+        return {
+          grid: { left: 62, right: 18, top: 18, bottom: 40 },
+          xAxis: PF.ejeTiempo(X),
+          yAxis: PF.ejeY(function (v) { return PF.corto(v) + ' MM'; }),
+          tooltip: PF.tooltip(function (ps) {
+            const i = i0 + ps[0].dataIndex; panel(i);
+            let h = PF.ttTitulo(PF.trim(P[i]));
+            ps.slice().reverse().forEach(function (q) { h += PF.ttFila(q.color, q.seriesName, PF.num(q.value, 0) + ' MM USD'); });
+            return h + PF.ttPie('Total: <strong style="color:#fff">' + PF.num(T.acreedor.total[i], 0) + ' MM USD</strong>');
+          }, { axisPointer: { type: 'line', lineStyle: { color: d ? '#475569' : '#94A3B8', type: 'dashed' } } }),
+          series: partes.filter(function (pt) { return activas.has(pt[0]); }).map(function (pt) {
+            return { name: pt[1], type: 'line', stack: 'd', smooth: true, smoothMonotone: 'x', symbol: 'none', lineStyle: { width: 0 },
+                     areaStyle: { color: pt[2], opacity: d ? 0.88 : 0.92 }, itemStyle: { color: pt[2] }, emphasis: { focus: 'series' },
+                     data: X.map(function (_, j) { return val(pt[0], i0 + j); }) };
+          })
+        };
+      }
+      activas = new Set(PARTES.acreedor.map(function (p) { return p[0]; }));
+      const g = PF.montar(document.getElementById('chart'), opciones);
+
+      function pastillas() {
+        activas = new Set(PARTES[estado.corte].map(function (p) { return p[0]; }));
+        PF.pastillas(document.getElementById('pastillas'), PARTES[estado.corte].map(function (p) { return { k: p[0], nombre: p[1], color: p[2] }; }), activas, function () { g.redibujar(); });
+      }
+      pastillas(); g.redibujar();
+      PF.botonera(document.getElementById('b-corte'), [['acreedor', 'Acreedor'], ['deudor', 'Deudor']], estado.corte, function (x) { estado.corte = x; pastillas(); g.redibujar(); panel(estado.idx); });
+      PF.botonera(document.getElementById('b-rango'), [['5a', '5A'], ['2017', 'Desde 2017'], ['todo', 'Desde 2009']], estado.rango, function (x) { estado.rango = x; g.redibujar(); });
+
+      function panel(i) {
+        if (i === null || i === undefined) i = N;
+        estado.idx = i;
+        document.getElementById('panel-fecha').textContent = PF.trim(P[i]);
+        const tot = T.acreedor.total[i];
+        let h = PF.pb(PF.tinta(), 'Total', PF.num(tot, 0) + ' MM USD', i >= 4 ? 'Un año antes: ' + PF.num(T.acreedor.total[i - 4], 0) + ' MM USD (' + PF.signo(100 * (tot / T.acreedor.total[i - 4] - 1), 1) + '%).' : '');
+        PARTES[estado.corte].forEach(function (pt) {
+          const v = val(pt[0], i);
+          if (pt[0] !== 'privados' && pt[0] !== 'resto') h += PF.pb(pt[2], pt[1], PF.num(v, 0) + ' MM USD', '<strong>' + PF.num(100 * v / tot, 1) + '%</strong> del total.');
+        });
+        const multi = T.acreedor.multilateral[i] / tot, bonos = T.acreedor.titulos_de_deuda[i] / tot;
+        const t = 'Al ' + PF.trim(P[i]) + ', <strong>' + PF.num(100 * multi, 0) + ' de cada 100 dólares</strong> se le deben a organismos multilaterales (BID, CAF, Banco Mundial), a tasas y plazos más blandos que el mercado. ' +
+          'Los bonos soberanos, la deuda más cara y la que el mercado sigue día a día en el riesgo país, son el <strong>' + PF.num(100 * bonos, 1) + '%</strong>.';
+        document.getElementById('panel').innerHTML = h + PF.ctx(t);
+      }
+      panel(N);
+
+      // Ranking de acreedores del Tesoro (MEFP): barras horizontales por grupo.
+      const acre = Object.keys(tgn.series).filter(function (k) { return k.split('.').length === 2 && tgn.series[k][ult]; })
+        .map(function (k) { return { g: k.split('.')[0], k: k.split('.')[1], v: tgn.series[k][ult] }; })
+        .sort(function (a, b) { return a.v - b.v; }).slice(-10);
+      const colorG = { multilateral: C.turquesa, bilateral: C.oro, privados: C.rojo };
+      document.getElementById('sub-acre').textContent = 'Deuda externa del Tesoro por acreedor, ' + PF.mes(tgn.meses[ult]) + ' (MEFP), millones de USD. Turquesa: multilaterales · oro: bilaterales · rojo: bonos. El BCB agrupa a China entre «otros bilaterales»; el MEFP la muestra aparte.';
+      PF.montar(document.getElementById('acreedores'), function () {
+        const d = PF.dk(), tot = tgn.series.total[ult], izq = PF.pequeno() ? 112 : 176;
+        return {
+          // Margen fijo y nombres que se parten en dos líneas: containLabel cortaba el más largo.
+          grid: { left: izq, right: 104, top: 6, bottom: 6 },
+          xAxis: { type: 'value', show: false },
+          yAxis: { type: 'category', data: acre.map(function (a) { return tgn.meta.nombres[a.k] || a.k; }), axisLine: { show: false }, axisTick: { show: false },
+                   axisLabel: { fontFamily: 'Inter', fontSize: 11, fontWeight: 600, color: d ? '#E2E8F0' : '#0D1B2A', width: izq - 14, overflow: 'break', lineHeight: 13 } },
+          tooltip: PF.tooltip(function (ps) { const a = acre[ps[0].dataIndex]; return PF.ttTitulo(tgn.meta.nombres[a.k] || a.k) + PF.ttFila(colorG[a.g], 'Saldo', PF.num(a.v, 0) + ' MM USD') + PF.ttPie(PF.num(100 * a.v / tot, 1) + '% de la deuda externa del Tesoro'); }),
+          series: [{ type: 'bar', barWidth: '62%', data: acre.map(function (a) { return { value: a.v, itemStyle: { color: colorG[a.g], borderRadius: [0, 4, 4, 0] } }; }),
+                     label: { show: true, position: 'right', fontFamily: 'JetBrains Mono', fontSize: 10.5, fontWeight: 700, color: d ? '#E2E8F0' : '#0D1B2A', formatter: function (q) { return PF.num(q.value, 0) + '  ·  ' + PF.num(100 * q.value / tot, 1) + '%'; } } }]
+        };
+      });
+
+      const ce = conc.externa, dmax = Math.max.apply(null, ce.map(function (x) { return Math.abs(x.diferencia); }));
+      PF.preguntas(document.getElementById('preguntas'), [
+        ['¿Quiénes son los acreedores multilaterales?', 'Organismos de los que Bolivia es socia: el <strong>BID</strong>, la <strong>CAF</strong>, el <strong>Banco Mundial</strong> y otros. Prestan a plazos largos y tasas más bajas que el mercado, casi siempre para proyectos.'],
+        ['¿Qué son los bonos soberanos?', 'Títulos que el Estado vende a inversores internacionales. Son la deuda más cara y la más sensible al mercado: su rendimiento, comparado con el de los bonos de Estados Unidos, es el <strong>riesgo país</strong>.'],
+        ['¿Coinciden el BCB y el MEFP?', 'Sí. La deuda externa del Tesoro que publica el MEFP y la del Gobierno Central que registra el BCB son iguales en los <strong>' + ce.length + ' trimestres</strong> desde el ' + PF.trim(ce[0].periodo) + ' (la mayor diferencia, ' + PF.num(dmax, 1) + ' millones de dólares).'],
+        ['¿Cómo se pasa a % del PIB?', 'Se convierte a bolivianos al tipo de cambio oficial de compra (Bs ' + PF.num(ind.meta.tipo_cambio.fijo, 2) + ' por dólar hasta el ' + PF.dia(ind.meta.tipo_cambio.hasta) + '; después, el oficial vigente) y se divide por el PIB nominal del año (INE, base 2017).']
+      ]);
+      document.getElementById('fuente').innerHTML = 'Fuente: <a href="' + de.meta.pagina + '" target="_blank">BCB — Deuda externa pública</a> · <a href="' + tgn.meta.pagina + '" target="_blank">MEFP — Deuda externa del TGN</a> · Elaboración: Centro de Estudios POPULI · Datos al: ' + PF.trim(de.meta.ultimo_trimestre);
+    }).catch(function (e) { document.getElementById('chart').innerHTML = '<div class="loading" style="color:#C71E1D">No se pudieron cargar los datos: ' + e.message + '</div>'; });
+  })();
+  </script>
 </body>
 </html>

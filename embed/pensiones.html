@@ -1,182 +1,176 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dónde invierten los fondos de pensiones · Monitor Fiscal POPULI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="comun.css">
-<script src="lib/echarts.min.js"></script>
-<script src="comun.js"></script>
-<style>.card.bajo { margin-top: 16px; min-height: 0; } #proxy { height: 380px; } .card.bajo h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; margin-bottom: 4px; } .card.bajo p.s { font-size: .78rem; color: var(--muted); margin-bottom: 8px; max-width: 80ch; }</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dónde Invierten los Fondos de Pensiones · Populi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="estilo.css" />
+  <style>:root{--c-accent:#0A9396}.hz-btn.active{box-shadow:0 2px 8px rgba(10,147,150,.25)}#proxy{height:340px}
+    .leyenda-proxy{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center}
+    .leyenda-proxy span{display:inline-flex;align-items:center;gap:6px}
+    .sw-barra{display:inline-block;width:10px;height:10px;background:#E2E8F0}
+    [data-theme="dark"] .sw-barra{background:#334155}
+    .sw-linea{display:inline-block;width:16px;height:0;border-top:2.5px solid #C71E1D}</style>
+  <script src="lib/echarts.min.js"></script>
+  <script src="base.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="hd">
-    <h1 class="hd-t">Dónde invierten los fondos de pensiones</h1>
-    <p class="hd-s">La cartera de los fondos del Sistema Integral de Pensiones mes a mes: cuánto está prestado al Tesoro, cuánto en depósitos bancarios y cuánto en el resto. Es el ahorro previsional de los trabajadores.</p>
-  </div>
-  <div class="ctl">
-    <div class="ctl-g"><span class="ctl-l">Ver</span><div class="seg" id="c-vista"></div></div>
-    <div class="ctl-g"><span class="ctl-l">Unidad</span><div class="seg" id="c-unidad"></div></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div class="leyenda" id="leyenda"></div>
-      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="sec-title"><span class="accent-bar"></span>Dónde Invierten los Fondos de Pensiones</div>
+      <div class="sec-sub">Cartera de los fondos del Sistema Integral de Pensiones, mes a mes: cuánto del ahorro de los trabajadores está prestado al Tesoro, cuánto en bancos y cuánto en el resto</div>
     </div>
-    <aside class="lect">
-      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
-      <div class="lect-bd" id="lectura"></div>
-    </aside>
-  </div>
-  <div class="card bajo">
-    <h2>¿Cuánto de la deuda del Tesoro con privados tienen los fondos?</h2>
-    <p class="s">Barras: deuda interna del TGN con el sector privado (MEFP). Línea: bonos y letras del TGN en la cartera de los fondos, a valor de mercado y en bolivianos (APS). Millones de bolivianos.</p>
-    <div class="leyenda" id="leyenda2"></div>
-    <div id="proxy"></div>
-  </div>
-  <details class="notas">
-    <summary>Cómo se construye y qué cuidar</summary>
-    <div>
-      <p><strong>Fuente.</strong> APS, «Fondos del SIP – Detalle de Cartera», un PDF por mes. Hasta 2023 el PDF trae una tabla por AFP y, casi siempre, un consolidado «TOTAL AFP»; se usa el consolidado y, si falta, se suman las dos AFP. Cada mes se verifica que la suma de los instrumentos dé el total de cartera del propio PDF.</p>
-      <p><strong>Moneda.</strong> La APS publica todo en dólares, aunque <span id="pct-bob"></span> de la cartera esté en bolivianos. Para volver a bolivianos se usa <strong>el mismo tipo de cambio que usó la APS</strong>, que se mide cada mes con un bono testigo del TGN cuyo nominal en bolivianos no cambia<span id="tc"></span>.</p>
-      <p><strong>Papeles del TGN.</strong> En la línea de abajo entra el capital que el Tesoro debe: bonos (con y sin cupones) y letras. Los cupones sueltos del TGN son intereses por cobrar y quedan fuera. Los <strong>bonos soberanos</strong> emitidos en el exterior que tienen los fondos van en «Exterior»: el MEFP los cuenta como deuda externa, no interna.</p>
-      <p><strong>Por qué valor de mercado.</strong> La columna «valor nominal» de la APS cambió de definición con el traspaso de las AFP a la Gestora: hasta mayo de 2023 el nominal de los bonos con cupones superaba al de mercado en torno a 9 %, y desde junio de 2023 casi coinciden. Sumada tal cual, la serie nominal salta (en mayo de 2023 daría más papeles del TGN en los fondos que toda la deuda del TGN con privados). El valor de mercado es homogéneo en todo el período, y por eso es el que se compara con el saldo del MEFP; el nominal queda a la vista en el detalle de cada mes.</p>
-      <p><strong>Huecos.</strong> <span id="huecos"></span></p>
+
+    <div class="hz-bar">
+      <span class="hz-lbl">Ver:</span><div class="hz-grp" id="b-vista"></div>
+      <span class="hz-lbl" style="margin-left:8px">Medida:</span><div class="hz-grp" id="b-medida"></div>
     </div>
-  </details>
-  <div class="fuente">
-    <span>Fuente: <a id="f-aps" target="_blank" rel="noopener">APS, Inversiones del FCI</a> · <a id="f-mefp" target="_blank" rel="noopener">MEFP, deuda interna del TGN</a>. Elaboración: Centro de Estudios POPULI.</span>
-    <span id="f-corte"></span>
+
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <div class="chart-ctrl"><div class="tog-grp" id="pastillas"></div></div>
+        <div id="chart"><div class="loading"><div class="spinner"></div><span style="font-size:.8rem">Cargando…</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd" style="background:#005F73"><span class="panel-hd-t">Composición de la cartera</span><span class="panel-hd-d" id="panel-fecha" style="color:#94D2BD;background:rgba(10,147,150,.25)"></span></div>
+        <div class="panel-body" id="panel"></div>
+        <div class="panel-ft"><a href="../index.html" target="_blank" class="amp"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ampliar análisis</a></div>
+      </div>
+    </div>
+
+    <div class="sub-card">
+      <h3>¿Cuánto de la deuda del Tesoro con privados tienen los fondos?</h3>
+      <div class="sec-sub leyenda-proxy"><span><i class="sw-barra"></i>Deuda interna del TGN con el sector privado (MEFP)</span><span><i class="sw-linea"></i>Bonos y letras del TGN en los fondos, a valor de mercado (APS)</span><span>Millones de Bs</span></div>
+      <div id="proxy"></div>
+    </div>
+
+    <div class="edu-grid" id="preguntas"></div>
+    <div class="source"><span class="source-txt" id="fuente"></span></div>
   </div>
-</div>
-<script>
-(function () {
-  const estado = { vista: 'instrumento', unidad: 'pct' };
-  const el = document.getElementById('chart');
-  const COLOR_GRUPO = { tgn: 'neg', dpf: 'pos', bonos_privados: 'c3', fondos: 'g1', bcb: 'g2', exterior: 'g3' };
-  const MONEDAS = [['BOB', 'Bolivianos', 'pos'], ['USD', 'Dólares', 'c3'], ['UFV', 'UFV', 'g1'], ['MVDOL', 'Mantenimiento de valor (MVDOL)', 'g2']];
 
-  PF.cargar(['indicadores.json', 'deuda_interna.json']).then(function (r) {
-    const S = r[0].sip, di = r[1];
-    if (!S || !S.meses) throw new Error('sin datos del SIP');
-    // Eje mensual continuo: los meses sin lectura quedan como hueco (no se interpolan).
-    const M = [];
-    for (let a = +S.meses[0].slice(0, 4), m = +S.meses[0].slice(5); ; m++) {
-      if (m > 12) { m = 1; a++; }
-      const k = a + '-' + String(m).padStart(2, '0');
-      M.push(k);
-      if (k === S.meses[S.meses.length - 1]) break;
-    }
-    const idx = function (k) { return S.meses.indexOf(k); };
-    document.getElementById('f-aps').href = S.fuente;
-    document.getElementById('f-mefp').href = di.meta.pagina;
-    document.getElementById('f-corte').textContent = 'APS a ' + PF.mesLargo(S.ultimo_mes) + ' · MEFP a ' + PF.mesLargo(di.meta.ultimo_mes) + '.';
-    document.getElementById('corte').textContent = PF.mes(S.ultimo_mes);
-    const huecos = Object.keys(S.sin_lectura || {});
-    document.getElementById('huecos').textContent = (huecos.length ? huecos.length + ' meses no se pudieron leer (PDF escaneado o con el gráfico encima de la tabla): ' + huecos.map(PF.mes).join(', ') + '. ' : '') +
-      (S.nominal_dudoso.length ? 'En ' + S.nominal_dudoso.map(PF.mes).join(', ') + ' la APS repitió el valor de mercado en la columna nominal: el nominal de ese mes no se usa. ' : '') +
-      'Ningún mes faltante se interpola.';
-    const nU = S.meses.length - 1;
-    document.getElementById('pct-bob').textContent = 'el ' + PF.num(100 * S.moneda_usd.BOB[nU] / S.valor_fondos_usd[nU], 0) + ' %';
-    const tcs = Array.from(new Set(S.tc_usado));
-    document.getElementById('tc').textContent = ' (' + tcs.map(function (t) { return 'Bs ' + PF.num(t, 2); }).join(', ') + ' por dólar en el período)';
+  <script>
+  (function () {
+    const C = PF.C;
+    const estado = { vista: 'instrumento', medida: 'pct', idx: null };
+    const COLOR = { tgn: C.rojo, dpf: C.turquesa, bonos_privados: C.oro, fondos: C.petroleo, bcb: C.rojoClaro, exterior: C.gris };
+    const NOMBRE = { tgn: 'Tesoro (TGN)', dpf: 'Depósitos a plazo fijo', bonos_privados: 'Bonos privados', fondos: 'Cuotas de fondos', bcb: 'Banco Central', exterior: 'Exterior' };
+    const MONEDAS = [['BOB', 'Bolivianos', C.turquesa], ['UFV', 'UFV', C.petroleo], ['USD', 'Dólares', C.oro], ['MVDOL', 'MVDOL', C.oroOscuro]];
+    let activas;
 
-    const series = function () {
-      const vf = function (i) { return S.valor_fondos_usd[i]; };
-      const conv = function (v, i) { return v == null ? null : estado.unidad === 'pct' ? 100 * v / vf(i) : v / 1e6; };
-      if (estado.vista === 'instrumento') {
-        return S.grupos.map(function (g) {
-          return { nombre: g.nombre, color: COLOR_GRUPO[g.clave], datos: M.map(function (k) { const i = idx(k); return i < 0 ? null : conv(S.composicion_usd[g.clave][i], i); }) };
-        });
+    PF.cargar(['indicadores.json', 'deuda_interna.json']).then(function (r) {
+      const S = r[0].sip, di = r[1];
+      // Eje mensual continuo: los meses sin lectura quedan como hueco (no se interpolan).
+      const M = [];
+      for (let a = +S.meses[0].slice(0, 4), m = +S.meses[0].slice(5); ; m++) {
+        if (m > 12) { m = 1; a++; }
+        const k = a + '-' + String(m).padStart(2, '0'); M.push(k);
+        if (k === S.meses[S.meses.length - 1]) break;
       }
-      return MONEDAS.map(function (m) {
-        return { nombre: m[1], color: m[2], datos: M.map(function (k) { const i = idx(k); return i < 0 ? null : conv(S.moneda_usd[m[0]][i], i); }) };
+      const idx = function (k) { return S.meses.indexOf(k); };
+      const huecos = M.filter(function (k) { return idx(k) < 0; });
+      const n = S.meses.length - 1, vf = function (i) { return S.valor_fondos_usd[i]; };
+      const i17 = idx(S.meses.find(function (m) { return m.endsWith('-12'); }));
+      const Cm = S.comparacion_mefp, ult = Cm[Cm.length - 1], partes = Cm.map(function (x) { return x.participacion; });
+
+      document.getElementById('kpis').innerHTML =
+        PF.kpi(PF.tinta(), 'Valor de los fondos', PF.num(vf(n) / 1e6, 0) + ' MM USD', PF.mes(S.meses[n]), 'flat') +
+        PF.kpi(C.rojo, 'Prestado al Tesoro', PF.num(100 * S.composicion_usd.tgn[n] / vf(n), 1) + '%', PF.mes(S.meses[i17]) + ': ' + PF.num(100 * S.composicion_usd.tgn[i17] / vf(i17), 1) + '%', 'up') +
+        PF.kpi(C.rojoOscuro, 'De la deuda del TGN con privados', PF.num(ult.participacion, 0) + '%', 'la tienen los fondos · rango ' + PF.num(Math.min.apply(null, partes), 0) + '–' + PF.num(Math.max.apply(null, partes), 0) + '%', 'flat') +
+        PF.kpi(C.turquesa, 'Invertido en bolivianos', PF.num(100 * S.moneda_usd.BOB[n] / vf(n), 0) + '%', 'la APS lo publica en dólares', 'flat');
+
+      function lista() {
+        return estado.vista === 'instrumento' ? S.grupos.map(function (g) { return { k: g.clave, nombre: NOMBRE[g.clave], color: COLOR[g.clave], serie: S.composicion_usd[g.clave] }; })
+                                              : MONEDAS.map(function (m) { return { k: m[0], nombre: m[1], color: m[2], serie: S.moneda_usd[m[0]] }; });
+      }
+      function opciones() {
+        const d = PF.dk();
+        return {
+          grid: { left: 58, right: 18, top: 18, bottom: 40 },
+          xAxis: PF.ejeTiempo(M),
+          yAxis: PF.ejeY(function (v) { return estado.medida === 'pct' ? PF.num(v, 0) + '%' : PF.corto(v) + ' MM'; }, estado.medida === 'pct' ? { max: 100 } : {}),
+          tooltip: PF.tooltip(function (ps) {
+            const k = M[ps[0].dataIndex], i = idx(k);
+            if (i < 0) return PF.ttTitulo(PF.mes(k)) + '<div style="font-size:11px;color:#E2DDD3">Sin lectura: el PDF de la APS de ese mes no se pudo leer.</div>';
+            panel(i);
+            let h = PF.ttTitulo(PF.mes(k));
+            ps.slice().reverse().forEach(function (q) { if (q.value != null) h += PF.ttFila(q.color, q.seriesName, estado.medida === 'pct' ? PF.num(q.value, 1) + '%' : PF.num(q.value, 0) + ' MM USD'); });
+            return h + PF.ttPie('Valor de los fondos: <strong style="color:#fff">' + PF.num(vf(i) / 1e6, 0) + ' MM USD</strong>');
+          }, { axisPointer: { type: 'line', lineStyle: { color: d ? '#475569' : '#94A3B8', type: 'dashed' } } }),
+          series: lista().filter(function (s) { return activas.has(s.k); }).map(function (s, j) {
+            return { name: s.nombre, type: 'line', stack: 'x', symbol: 'none', lineStyle: { width: 0 }, connectNulls: false,
+                     areaStyle: { color: s.color, opacity: d ? 0.88 : 0.92 }, itemStyle: { color: s.color }, emphasis: { focus: 'series' },
+                     data: M.map(function (k) { const i = idx(k); if (i < 0) return null; return estado.medida === 'pct' ? 100 * s.serie[i] / vf(i) : s.serie[i] / 1e6; }),
+                     // Los meses sin lectura se ven como hueco gris, no como un corte del gráfico.
+                     markArea: j ? undefined : { silent: true, itemStyle: { color: d ? 'rgba(148,163,184,.14)' : 'rgba(148,163,184,.18)' },
+                       data: huecos.map(function (k) { const p = M.indexOf(k); return [{ xAxis: M[Math.max(0, p - 1)] }, { xAxis: M[Math.min(M.length - 1, p + 1)] }]; }) } };
+          })
+        };
+      }
+      activas = new Set(lista().map(function (s) { return s.k; }));
+      const g = PF.montar(document.getElementById('chart'), opciones);
+      function pastillas() {
+        activas = new Set(lista().map(function (s) { return s.k; }));
+        PF.pastillas(document.getElementById('pastillas'), lista(), activas, function () { g.redibujar(); });
+      }
+      pastillas();
+      PF.botonera(document.getElementById('b-vista'), [['instrumento', 'Por instrumento'], ['moneda', 'Por moneda']], estado.vista, function (x) { estado.vista = x; pastillas(); g.redibujar(); });
+      PF.botonera(document.getElementById('b-medida'), [['pct', '% del fondo'], ['usd', 'Millones de USD']], estado.medida, function (x) { estado.medida = x; g.redibujar(); });
+
+      function panel(i) {
+        if (i === null || i === undefined) i = n;
+        estado.idx = i;
+        document.getElementById('panel-fecha').textContent = PF.mes(S.meses[i]);
+        let h = '';
+        ['tgn', 'dpf', 'bonos_privados', 'exterior'].forEach(function (k) {
+          const v = S.composicion_usd[k][i];
+          h += PF.pb(COLOR[k], NOMBRE[k], PF.num(100 * v / vf(i), 1) + '%', PF.num(v / 1e6, 0) + ' MM USD' + (k === 'exterior' ? ' · ' + PF.num(100 * S.soberanos_usd[i] / (v || 1), 0) + '% en bonos soberanos de Bolivia (deuda externa para el MEFP).' : '.'));
+        });
+        const x = Cm.find(function (c) { return c.mes === S.meses[i]; });
+        const t = 'En <strong>' + PF.mes(S.meses[i]) + '</strong>, ' + PF.num(100 * S.composicion_usd.tgn[i] / vf(i), 0) + ' de cada 100 dólares de los fondos estaban prestados al Tesoro' +
+          (x ? ', y los fondos tenían el <strong>' + PF.num(x.participacion, 0) + '%</strong> de toda la deuda del Tesoro con el sector privado.' : '.') +
+          ' Cuando el Tesoro vende bonos en subasta, el ahorro previsional es su principal comprador.';
+        document.getElementById('panel').innerHTML = h + PF.ctx(t);
+      }
+      panel(n);
+
+      // Proxy: deuda del TGN con privados (MEFP) y lo que tienen los fondos (APS).
+      const mesesC = di.meses.filter(function (m) { return m <= S.ultimo_mes; });
+      PF.montar(document.getElementById('proxy'), function () {
+        const d = PF.dk();
+        const sip = mesesC.map(function (m) { const x = Cm.find(function (y) { return y.mes === m; }); return x ? x.sip_tgn_mercado : null; });
+        const priv = mesesC.map(function (m) { return di.series.privado[di.meses.indexOf(m)]; });
+        return {
+          grid: { left: 62, right: 18, top: 14, bottom: 40 },
+          xAxis: PF.ejeTiempo(mesesC, { boundaryGap: true }),
+          yAxis: PF.ejeY(function (v) { return PF.corto(v) + ' MM'; }),
+          tooltip: PF.tooltip(function (ps) {
+            const i = ps[0].dataIndex;
+            return PF.ttTitulo(PF.mes(mesesC[i])) + PF.ttFila(d ? '#64748B' : '#CBD5E1', 'Deuda del TGN con privados', PF.num(priv[i], 0) + ' MM Bs') +
+              PF.ttFila(C.rojo, 'En los fondos de pensiones', sip[i] == null ? 'sin dato' : PF.num(sip[i], 0) + ' MM Bs') +
+              PF.ttPie('Participación de los fondos: <strong style="color:#fff">' + (sip[i] == null ? '—' : PF.num(100 * sip[i] / priv[i], 1) + '%') + '</strong>');
+          }),
+          series: [
+            { type: 'bar', name: 'MEFP', data: priv, barCategoryGap: '22%', itemStyle: { color: d ? '#334155' : '#E2E8F0' } },
+            { type: 'line', name: 'APS', data: sip, connectNulls: false, symbol: 'circle', symbolSize: 5, showSymbol: false, lineStyle: { color: C.rojo, width: 2.5 }, itemStyle: { color: C.rojo }, z: 5 }
+          ]
+        };
       });
-    };
-    const g = PF.montar(el, function () {
-      const c = PF.c(), ss = series();
-      const fmt = function (v) { return v == null ? '—' : estado.unidad === 'pct' ? PF.num(v, 1) + ' %' : 'US$ ' + PF.num(v, 0); };
-      PF.leyenda(document.getElementById('leyenda'), ss.map(function (s) { return { nombre: s.nombre, color: c[s.color] }; }));
-      return {
-        animationDuration: 500,
-        grid: PF.grid({ top: 16 }),
-        tooltip: PF.tooltip({
-          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } },
-          formatter: function (ps) {
-            const k = M[ps[0].dataIndex];
-            if (idx(k) < 0) return '<b>' + PF.mes(k) + '</b><br>Sin lectura: el PDF de la APS de ese mes no se pudo leer.';
-            return '<b>' + PF.mes(k) + '</b> · ' + (estado.unidad === 'pct' ? '% del valor de los fondos' : 'millones de dólares') +
-              ss.slice().reverse().map(function (s) { return PF.fila(c[s.color], s.nombre, fmt(s.datos[ps[0].dataIndex])); }).join('');
-          }
-        }),
-        xAxis: PF.ejeX(M.map(PF.mes), { axisLabel: { color: c.muted, fontSize: 10.5, interval: function (i) { return M[i].endsWith('-01') && (!PF.pequeño() || (+M[i].slice(0, 4)) % 2 === 1); }, formatter: function (v) { return v.slice(-4); } } }),
-        yAxis: PF.ejeY(function (v) { return estado.unidad === 'pct' ? PF.num(v, 0) + ' %' : PF.num(v / 1000, 0) + ' mil'; }, estado.unidad === 'pct' ? { max: 100 } : {}),
-        series: ss.map(function (s) {
-          return { type: 'bar', stack: 'x', name: s.nombre, data: s.datos, barCategoryGap: '10%', itemStyle: { color: c[s.color] }, emphasis: { focus: 'series' } };
-        })
-      };
-    });
-    PF.segmento(document.getElementById('c-vista'), [['instrumento', 'Por instrumento'], ['moneda', 'Por moneda']], estado.vista, function (v) { estado.vista = v; g.redibujar(); });
-    PF.segmento(document.getElementById('c-unidad'), [['pct', '% del fondo'], ['usd', 'Millones de US$']], estado.unidad, function (v) { estado.unidad = v; g.redibujar(); });
 
-    // Comparación con el MEFP: deuda del TGN con privados (barras) y lo que tienen los fondos (línea).
-    const C = S.comparacion_mefp;
-    const mesesC = di.meses.filter(function (m) { return m <= S.ultimo_mes; });
-    PF.montar(document.getElementById('proxy'), function () {
-      const c = PF.c();
-      const sip = mesesC.map(function (m) { const x = C.find(function (y) { return y.mes === m; }); return x ? x.sip_tgn_mercado : null; });
-      const nom = mesesC.map(function (m) { const x = C.find(function (y) { return y.mes === m; }); return x ? x.sip_tgn_nominal : null; });
-      const priv = mesesC.map(function (m) { return di.series.privado[di.meses.indexOf(m)]; });
-      PF.leyenda(document.getElementById('leyenda2'), [{ nombre: 'Deuda del TGN con el sector privado (MEFP)', color: c.g3 },
-        { nombre: 'Papeles del TGN en los fondos de pensiones (APS)', color: c.neg, forma: 'linea' }]);
-      return {
-        animationDuration: 400,
-        grid: PF.grid({ top: 12 }),
-        tooltip: PF.tooltip({ formatter: function (ps) {
-          const i = ps[0].dataIndex;
-          const part = sip[i] != null && priv[i] ? PF.num(100 * sip[i] / priv[i], 1) + ' %' : '—';
-          return '<b>' + PF.mes(mesesC[i]) + '</b> · millones de Bs' + PF.fila(c.g3, 'Deuda del TGN con privados', PF.num(priv[i], 0)) +
-            PF.fila(c.neg, 'En los fondos (valor de mercado)', sip[i] == null ? 'sin dato' : PF.num(sip[i], 0), 'linea') +
-            PF.fila(c.muted, 'En los fondos (valor nominal)', nom[i] == null ? '—' : PF.num(nom[i], 0), 'linea') +
-            PF.fila(c.ink, 'Participación de los fondos', part, 'linea');
-        } }),
-        xAxis: PF.ejeX(mesesC.map(PF.mes), { axisLabel: { color: c.muted, fontSize: 10.5, interval: function (i) { return mesesC[i].endsWith('-12') || (!PF.pequeño() && mesesC[i].endsWith('-06')); } } }),
-        yAxis: PF.ejeY(function (v) { return PF.num(v / 1000, 0) + ' mil'; }),
-        series: [
-          { type: 'bar', name: 'MEFP', data: priv, barCategoryGap: '25%', itemStyle: { color: c.g3 } },
-          { type: 'line', name: 'APS', data: sip, connectNulls: false, symbol: 'rect', symbolSize: 6, showSymbol: false,
-            lineStyle: { color: c.neg, width: 2.2 }, itemStyle: { color: c.neg }, z: 5 }
-        ]
-      };
-    });
-
-    // Lectura.
-    const n = S.meses.length - 1, i17 = idx(S.meses.find(function (m) { return m.endsWith('-12'); }));
-    const vf = S.valor_fondos_usd[n];
-    const pctTgn = 100 * S.composicion_usd.tgn[n] / vf, pctTgn0 = 100 * S.composicion_usd.tgn[i17] / S.valor_fondos_usd[i17];
-    if (!C.length) throw new Error('sin meses comparables con el MEFP');
-    const ult = C[C.length - 1];
-    const partes = C.map(function (x) { return x.participacion; });
-    const pctExt = 100 * S.composicion_usd.exterior[n] / vf;
-    let h = '<div class="dato"><div class="dato-l">Valor de los fondos, ' + PF.mes(S.meses[n]) + '</div>' +
-      '<div class="dato-v">US$ ' + PF.num(vf / 1e6, 0) + '<small>millones</small></div>' +
-      '<div class="dato-d">' + PF.num(100 * S.moneda_usd.BOB[n] / vf, 0) + ' % invertido en bolivianos.</div></div>';
-    h += '<div class="dato"><div class="dato-l">Prestado al Tesoro</div>' +
-      '<div class="dato-v neg">' + PF.num(pctTgn, 1) + ' %<small>del fondo</small></div>' +
-      '<div class="dato-d">En ' + PF.mes(S.meses[i17]) + ' era ' + PF.num(pctTgn0, 1) + ' %. Depósitos a plazo fijo: ' + PF.num(100 * S.composicion_usd.dpf[n] / vf, 1) + ' %.</div></div>';
-    h += '<div class="dato"><div class="dato-l">De la deuda del TGN con privados</div>' +
-      '<div class="dato-v">' + PF.num(ult.participacion, 0) + ' %<small>la tienen los fondos</small></div>' +
-      '<div class="dato-d">Bs ' + PF.num(ult.sip_tgn_mercado, 0) + ' millones (a valor de mercado) de Bs ' + PF.num(ult.mefp_privado, 0) + ' (' + PF.mes(ult.mes) + '). Entre ' +
-      PF.mes(C[0].mes) + ' y hoy osciló entre ' + PF.num(Math.min.apply(null, partes), 0) + ' % y ' + PF.num(Math.max.apply(null, partes), 0) + ' %: la cartera de los fondos sirve como aproximación de quién le presta al Tesoro en el mercado.</div></div>';
-    h += '<div class="dato"><div class="dato-l">Bonos soberanos y otras inversiones afuera</div>' +
-      '<div class="dato-v">' + PF.num(pctExt, 1) + ' %<small>del fondo</small></div>' +
-      '<div class="dato-d">El ' + PF.num(100 * S.soberanos_usd[n] / S.composicion_usd.exterior[n], 0) + ' % de eso son bonos soberanos de Bolivia emitidos en el exterior: para el MEFP son deuda externa, no interna.</div></div>';
-    document.getElementById('lectura').innerHTML = h;
-  }).catch(function (e) { PF.error(el, e); });
-})();
-</script>
+      const sinLectura = Object.keys(S.sin_lectura || {});
+      PF.preguntas(document.getElementById('preguntas'), [
+        ['¿De dónde salen estos datos?', 'De la <strong>APS</strong>: un PDF por mes, «Fondos del SIP – Detalle de Cartera». Hasta 2023 trae una tabla por AFP y casi siempre un consolidado; se usa el consolidado y, si falta, se suman las dos AFP. Cada mes se verifica que los instrumentos sumen el total del PDF.'],
+        ['¿Por qué en dólares?', 'Así publica la APS, aunque la mayor parte de la cartera esté en bolivianos. Para pasar a bolivianos se usa el mismo tipo de cambio que usó la APS, medido cada mes con un bono del Tesoro cuyo valor en bolivianos no cambia (Bs ' + PF.num(S.tc_usado[S.tc_usado.length - 1], 2) + ' por dólar).'],
+        ['¿Por qué valor de mercado?', 'La columna «valor nominal» cambió de definición con el traspaso de las AFP a la Gestora (mayo de 2023): antes el nominal de los bonos con cupones superaba al de mercado en torno a 9 %; después casi coinciden. El valor de mercado es parejo en todo el período.'],
+        ['¿Hay meses que faltan?', sinLectura.length ? sinLectura.length + ' meses no se pudieron leer (PDF escaneado o con el gráfico encima de la tabla): ' + sinLectura.map(PF.mes).join(', ') + '. Quedan como huecos: no se interpolan.' : 'No: todos los meses se leyeron.']
+      ]);
+      document.getElementById('fuente').innerHTML = 'Fuente: <a href="' + S.fuente + '" target="_blank">APS — Inversiones del FCI</a> · <a href="' + di.meta.pagina + '" target="_blank">MEFP — Deuda interna del TGN</a> · Elaboración: Centro de Estudios POPULI · Datos al: ' + PF.mes(S.ultimo_mes);
+    }).catch(function (e) { document.getElementById('chart').innerHTML = '<div class="loading" style="color:#C71E1D">No se pudieron cargar los datos: ' + e.message + '</div>'; });
+  })();
+  </script>
 </body>
 </html>

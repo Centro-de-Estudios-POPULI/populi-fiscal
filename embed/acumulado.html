@@ -1,133 +1,155 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>El año, mes a mes · Monitor Fiscal POPULI</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="comun.css">
-<script src="lib/echarts.min.js"></script>
-<script src="comun.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Resultado Fiscal, Mes a Mes · Populi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="estilo.css" />
+  <script src="lib/echarts.min.js"></script>
+  <script src="base.js"></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="hd">
-    <h1 class="hd-t">El año, mes a mes</h1>
-    <p class="hd-s">Resultado del sector público no financiero acumulado desde enero. Cada línea es un año: permite ver cómo va el año en curso contra el mismo mes de los anteriores.</p>
-  </div>
-  <div class="ctl">
-    <div class="ctl-g"><span class="ctl-l">Resultado</span><div class="seg" id="c-tipo"></div></div>
-    <div class="ctl-g"><span class="ctl-l">Unidad</span><div class="seg" id="c-unidad"></div></div>
-  </div>
-  <div class="grid">
-    <div class="card">
-      <div class="leyenda" id="leyenda"></div>
-      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+  <div class="wrap">
+    <div class="sec-hd">
+      <div class="sec-title"><span class="accent-bar"></span>El Resultado Fiscal, Mes a Mes</div>
+      <div class="sec-sub">Resultado del sector público acumulado desde enero, una línea por año: cómo va el año en curso contra el mismo mes de los anteriores</div>
     </div>
-    <aside class="lect">
-      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
-      <div class="lect-bd" id="lectura"></div>
-    </aside>
-  </div>
-  <details class="notas">
-    <summary>Cómo se calcula</summary>
-    <div>
-      <p>Para cada año se suma el resultado mensual del SPNF (flujo de caja, MEFP) desde enero hasta el mes indicado. Negativo es déficit.</p>
-      <p><strong>En bolivianos</strong> los años se comparan en moneda corriente: la inflación agranda los montos recientes. <strong>En % del PIB</strong> cada año se divide por el PIB nominal de ese mismo año (INE, base 2017); el año en curso no aparece hasta que el INE publique su PIB.</p>
-      <p>Los meses del año en curso son preliminares y el MEFP los revisa al publicar el mes siguiente.</p>
+
+    <div class="hz-bar">
+      <span class="hz-lbl">Medida:</span><div class="hz-grp" id="b-medida"></div>
+      <span class="hz-lbl" style="margin-left:8px">Resultado:</span><div class="hz-grp" id="b-tipo"></div>
     </div>
-  </details>
-  <div class="fuente">
-    <span>Fuente: <a id="f-mefp" target="_blank" rel="noopener">MEFP, operaciones consolidadas del SPNF</a> · <a id="f-ine" target="_blank" rel="noopener">INE, PIB base 2017</a>. Elaboración: Centro de Estudios POPULI.</span>
-    <span id="f-corte"></span>
+
+    <div class="kpi-grid" id="kpis"></div>
+
+    <div class="main-grid">
+      <div class="chart-card">
+        <div class="chart-ctrl"><div class="tog-grp" id="pastillas"></div></div>
+        <div id="chart"><div class="loading"><div class="spinner"></div><span style="font-size:.8rem">Cargando…</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-hd-t">Lectura del indicador</span><span class="panel-hd-d" id="panel-fecha"></span></div>
+        <div class="panel-body" id="panel"></div>
+        <div class="panel-ft"><a href="../index.html" target="_blank" class="amp"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ampliar análisis</a></div>
+      </div>
+    </div>
+
+    <div class="edu-grid" id="preguntas"></div>
+    <div class="source"><span class="source-txt" id="fuente"></span></div>
   </div>
-</div>
-<script>
-(function () {
-  const estado = { tipo: 'global', unidad: 'bs' };
-  const el = document.getElementById('chart');
-  const MES = PF.MESES.map(function (m) { return m.charAt(0).toUpperCase() + m.slice(1); });
 
-  PF.cargar(['indicadores.json', 'spnf.json', 'pib.json']).then(function (r) {
-    const ind = r[0], spnf = r[1], pib = r[2];
-    const AC = ind.acumulado;
-    const actual = AC[AC.length - 1], previo = AC[AC.length - 2];
-    document.getElementById('f-mefp').href = spnf.meta.pagina;
-    document.getElementById('f-ine').href = pib.meta.pagina;
-    document.getElementById('f-corte').textContent = 'Datos a ' + PF.mesLargo(spnf.meta.ultimo_mes) + ' (preliminar).';
-    document.getElementById('corte').textContent = PF.mes(spnf.meta.ultimo_mes);
+  <script>
+  (function () {
+    const C = PF.C;
+    const estado = { medida: 'bs', tipo: 'global', mes: null };
+    const activas = new Set(['actual', 'previo', 'resto']);
 
-    const valor = function (p) { return estado.unidad === 'pib' ? p[estado.tipo + '_pib'] : p[estado.tipo]; };
-    const fmt = function (v) { return estado.unidad === 'pib' ? PF.num(v, 1) + ' %' : 'Bs ' + PF.num(v, 0); };
-
-    const g = PF.montar(el, function () {
-      const c = PF.c();
-      // Color por año fijo: en curso = naranja, anterior = tinta, el resto gris.
-      const color = function (a) { return a.anio === actual.anio ? c.c3 : a.anio === previo.anio ? c.ink : c.g3; };
-      const visibles = AC.filter(function (a) { return estado.unidad === 'bs' || a.pib; });
-      const items = [];
-      if (visibles.indexOf(actual) >= 0) items.push({ nombre: String(actual.anio) + (actual.completo ? '' : ' (hasta ' + PF.MESES[actual.meses.length - 1] + ')'), color: c.c3, forma: 'linea' });
-      items.push({ nombre: String(previo.anio), color: c.ink, forma: 'linea' });
-      items.push({ nombre: AC[0].anio + '–' + (previo.anio - 1), color: c.g3, forma: 'linea' });
-      PF.leyenda(document.getElementById('leyenda'), items);
-      return {
-        animationDuration: 500,
-        grid: PF.grid({ right: PF.pequeño() ? 14 : 44 }),
-        tooltip: PF.tooltip({
-          formatter: function (ps) {
-            const m = ps[0].dataIndex;
-            const filas = visibles.map(function (a) { return { a: a, v: a.meses[m] ? valor(a.meses[m]) : null }; })
-              .filter(function (x) { return x.v !== null && x.v !== undefined; })
-              .sort(function (x, y) { return y.a.anio - x.a.anio; });
-            return '<b>Enero a ' + PF.MESES_L[m] + '</b>' + filas.map(function (x) {
-              return PF.fila(color(x.a), String(x.a.anio), fmt(x.v), 'linea');
-            }).join('');
-          }
-        }),
-        xAxis: PF.ejeX(MES, { boundaryGap: false }),
-        yAxis: PF.ejeY(function (v) { return estado.unidad === 'pib' ? PF.num(v, 0) + ' %' : PF.num(v / 1000, 0) + ' mil'; }),
-        series: visibles.map(function (a) {
-          const destacado = a.anio === actual.anio || a.anio === previo.anio;
-          return {
-            type: 'line', name: String(a.anio), data: a.meses.map(valor), showSymbol: false, symbol: 'rect',
-            symbolSize: 7, smooth: false, z: destacado ? 5 : 2,
-            lineStyle: { width: a.anio === actual.anio ? 3 : destacado ? 2 : 1.4, color: color(a) },
-            itemStyle: { color: color(a) }, emphasis: { focus: 'series' },
-            endLabel: { show: !PF.pequeño() && destacado, formatter: '{a}', color: c.ink, fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600 },
-            markLine: a === visibles[0] ? { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: c.muted, width: 1, type: 'solid' }, label: { show: false } } : undefined
-          };
-        })
+    PF.cargar(['indicadores.json', 'spnf.json', 'pib.json']).then(function (r) {
+      const ind = r[0], spnf = r[1], pib = r[2], AC = ind.acumulado;
+      const actual = AC[AC.length - 1], previo = AC[AC.length - 2];
+      const nM = actual.meses.length;
+      // Color fijo por año: el actual en rojo, el anterior en turquesa, los dos de antes en
+      // oro y petróleo; el resto, gris. 2020 (pandemia) punteado, como referencia.
+      const color = function (a) {
+        if (a.anio === actual.anio) return C.rojo;
+        if (a.anio === previo.anio) return C.turquesa;
+        if (a.anio === previo.anio - 1) return C.oro;
+        if (a.anio === previo.anio - 2) return C.petroleo;
+        return a.anio === 2020 ? C.rojoClaro : (PF.dk() ? '#475569' : '#CBD5E1');
       };
-    });
+      const grupo = function (a) { return a.anio === actual.anio ? 'actual' : a.anio === previo.anio ? 'previo' : 'resto'; };
+      const v = function (p) { return p ? (estado.medida === 'pib' ? p[estado.tipo + '_pib'] : p[estado.tipo]) : null; };
+      const fmt = function (x) { return x == null ? '—' : estado.medida === 'pib' ? PF.num(x, 1) + '% PIB' : PF.num(x, 0) + ' MM Bs'; };
+      const visibles = function () { return AC.filter(function (a) { return (estado.medida === 'bs' || a.pib) && activas.has(grupo(a)); }); };
 
-    PF.segmento(document.getElementById('c-tipo'), [['global', 'Global'], ['primario', 'Primario']], estado.tipo,
-      function (v) { estado.tipo = v; g.redibujar(); lectura(); });
-    PF.segmento(document.getElementById('c-unidad'), [['bs', 'Millones de Bs'], ['pib', '% del PIB']], estado.unidad,
-      function (v) { estado.unidad = v; g.redibujar(); lectura(); });
+      // Tarjetas.
+      const act = actual.meses[nM - 1], mis = previo.meses[nM - 1];
+      const conPib = AC.filter(function (a) { return a.pib && a.meses[nM - 1]; });
+      const prom = conPib.reduce(function (s, a) { return s + a.meses[nM - 1].global_pib; }, 0) / conPib.length;
+      const hasta = PF.MES_L[nM - 1];
+      document.getElementById('kpis').innerHTML =
+        PF.kpi(act.global < 0 ? C.rojo : C.turquesa, actual.anio + ', enero a ' + hasta, PF.num(act.global, 0) + ' MM', 'resultado global acumulado', 'flat') +
+        PF.kpi(C.turquesa, 'Mismo período ' + previo.anio, PF.num(mis.global, 0) + ' MM', PF.num(mis.global_pib, 1) + '% del PIB ' + previo.anio, 'flat') +
+        PF.kpi(act.primario >= 0 ? C.turquesa : C.rojoOscuro, 'Primario ' + actual.anio, PF.num(act.primario, 0) + ' MM', act.primario >= 0 ? 'superávit sin contar intereses' : 'déficit aun sin intereses', act.primario >= 0 ? 'down' : 'up') +
+        PF.kpi(PF.tinta(), 'Promedio ' + conPib[0].anio + '–' + conPib[conPib.length - 1].anio, PF.num(prom, 1) + '% PIB', 'acumulado de enero a ' + hasta, 'flat');
 
-    function lectura() {
-      const n = actual.meses.length, ultMes = actual.meses[n - 1], mismo = previo.meses[n - 1];
-      const hasta = PF.MESES_L[n - 1], nombre = estado.tipo === 'global' ? 'Resultado global' : 'Resultado primario';
-      const cls = function (v) { return v < 0 ? 'neg' : 'pos'; };
-      // Promedio de los años completos con PIB, al mismo mes, en % del PIB.
-      const conPib = AC.filter(function (a) { return a.pib && a.meses[n - 1]; });
-      const prom = conPib.reduce(function (s, a) { return s + a.meses[n - 1][estado.tipo + '_pib']; }, 0) / conPib.length;
-      let h = '<div class="dato"><div class="dato-l">' + nombre + ', enero a ' + hasta + ' de ' + actual.anio + '</div>' +
-        '<div class="dato-v ' + cls(ultMes[estado.tipo]) + '">Bs ' + PF.num(ultMes[estado.tipo], 0) + '<small>millones</small></div>' +
-        '<div class="dato-d">' + (ultMes[estado.tipo] < 0 ? 'Déficit' : 'Superávit') + ' acumulado en los primeros ' + n + ' meses del año.</div></div>';
-      h += '<div class="dato"><div class="dato-l">Mismo período de ' + previo.anio + '</div>' +
-        '<div class="dato-v ' + cls(mismo[estado.tipo]) + '">Bs ' + PF.num(mismo[estado.tipo], 0) + '<small>millones</small></div>' +
-        '<div class="dato-d">Equivalía a <strong>' + PF.num(mismo[estado.tipo + '_pib'], 1) + ' %</strong> del PIB de ' + previo.anio + '.</div></div>';
-      h += '<div class="dato"><div class="dato-l">Referencia ' + conPib[0].anio + '–' + conPib[conPib.length - 1].anio + '</div>' +
-        '<div class="dato-v">' + PF.num(prom, 1) + ' %<small>del PIB</small></div>' +
-        '<div class="dato-d">Promedio del ' + nombre.toLowerCase() + ' acumulado de enero a ' + hasta + ' en esos años. El de ' + actual.anio +
-        ' se podrá expresar en % del PIB cuando el INE publique el PIB del año (hoy llega a ' + PF.trim(ind.meta.pib_hasta) + ').</div></div>';
-      document.getElementById('lectura').innerHTML = h;
-    }
-    lectura();
-  }).catch(function (e) { PF.error(el, e); });
-})();
-</script>
+      const g = PF.montar(document.getElementById('chart'), function () {
+        const d = PF.dk();
+        return {
+          grid: { left: 62, right: PF.pequeno() ? 18 : 46, top: 18, bottom: 32 },
+          xAxis: PF.ejeX(PF.MES, { boundaryGap: false }),
+          yAxis: PF.ejeY(function (x) { return estado.medida === 'pib' ? PF.num(x, 0) + '%' : PF.corto(x) + ' MM'; }),
+          tooltip: PF.tooltip(function (ps) {
+            const m = ps[0].dataIndex;
+            panel(m);
+            let h = PF.ttTitulo('Enero a ' + PF.MES_L[m]);
+            ps.slice().sort(function (x, y) { return y.seriesName - x.seriesName; }).forEach(function (q) { if (q.value != null) h += PF.ttFila(q.color, q.seriesName, fmt(q.value)); });
+            return h;
+          }, { axisPointer: { type: 'line', lineStyle: { color: d ? '#475569' : '#94A3B8', type: 'dashed' } } }),
+          series: visibles().map(function (a) {
+            const esActual = a.anio === actual.anio, dest = esActual || a.anio === previo.anio;
+            return {
+              name: String(a.anio), type: 'line', data: a.meses.map(v), smooth: false, z: esActual ? 6 : dest ? 4 : 2,
+              symbol: 'circle', symbolSize: esActual ? 7 : 0, showSymbol: esActual,
+              lineStyle: { width: esActual ? 3 : dest ? 2.2 : 1.4, color: color(a), type: a.anio === 2020 ? 'dashed' : 'solid' },
+              itemStyle: { color: color(a), borderColor: d ? '#141414' : '#fff', borderWidth: 2 },
+              emphasis: { focus: 'series' },
+              endLabel: { show: dest && !PF.pequeno(), formatter: '{a}', color: color(a), fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 700 },
+              markLine: a === visibles()[0] ? { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: d ? '#475569' : '#94A3B8', width: 1 }, label: { show: false } } : undefined
+            };
+          })
+        };
+      });
+      g.chart.on('click', function (q) { if (q.dataIndex !== undefined) panel(q.dataIndex); });
+
+      PF.pastillas(document.getElementById('pastillas'), [
+        { k: 'actual', nombre: String(actual.anio) + (actual.completo ? '' : ' (a ' + PF.MES[nM - 1].toLowerCase() + ')'), color: C.rojo },
+        { k: 'previo', nombre: String(previo.anio), color: C.turquesa },
+        { k: 'resto', nombre: AC[0].anio + '–' + (previo.anio - 1), color: C.grisOscuro }
+      ], activas, function () { g.redibujar(); });
+      PF.botonera(document.getElementById('b-medida'), [['bs', 'Millones de Bs'], ['pib', '% del PIB']], estado.medida, function (x) { estado.medida = x; g.redibujar(); panel(estado.mes); });
+      PF.botonera(document.getElementById('b-tipo'), [['global', 'Global'], ['primario', 'Primario']], estado.tipo, function (x) { estado.tipo = x; g.redibujar(); panel(estado.mes); });
+
+      function panel(m) {
+        if (m === null || m === undefined) m = nM - 1;
+        estado.mes = m;
+        document.getElementById('panel-fecha').textContent = 'Ene–' + PF.MES[m];
+        const ea = actual.meses[m], ep = previo.meses[m];
+        const refs = AC.filter(function (a) { return a.pib && a.meses[m] && a !== actual; });
+        const promM = refs.reduce(function (s, a) { return s + a.meses[m][estado.tipo + '_pib']; }, 0) / refs.length;
+        const peor = refs.reduce(function (x, a) { return a.meses[m][estado.tipo + '_pib'] < x.meses[m][estado.tipo + '_pib'] ? a : x; });
+        let h = '';
+        h += ea ? PF.pb(C.rojo, String(actual.anio), fmt(v(ea)), 'Acumulado de enero a ' + PF.MES_L[m] + '.' + (estado.medida === 'pib' ? '' : '')) :
+                  PF.pb(C.rojo, String(actual.anio), '—', 'Todavía no hay dato de ' + PF.MES_L[m] + '.');
+        h += PF.pb(C.turquesa, String(previo.anio), fmt(v(ep)), 'Mismo período del año anterior: <strong>' + PF.num(ep[estado.tipo + '_pib'], 1) + '% del PIB</strong>.');
+        h += PF.pb(PF.tinta(), 'Referencia ' + refs[0].anio + '–' + refs[refs.length - 1].anio, PF.num(promM, 1) + '% PIB',
+                   'Promedio a ' + PF.MES_L[m] + '. El peor año a esta altura fue <strong>' + peor.anio + '</strong> (' + PF.num(peor.meses[m][estado.tipo + '_pib'], 1) + '%).');
+        let t;
+        if (ea) {
+          const mejora = ea[estado.tipo] > ep[estado.tipo];
+          t = 'De enero a ' + PF.MES_L[m] + ' de ' + actual.anio + ' el resultado ' + estado.tipo + ' fue <strong>' + PF.num(ea[estado.tipo], 0) + ' millones de Bs</strong>, ' +
+              (mejora ? '<strong>mejor</strong>' : '<strong>peor</strong>') + ' que en el mismo período de ' + previo.anio + ' (' + PF.num(ep[estado.tipo], 0) + ' millones). ' +
+              'Se compara en bolivianos corrientes: el INE todavía no publica el PIB de ' + actual.anio + ', y la inflación agranda los montos recientes.';
+        } else {
+          t = 'Para ' + PF.MES_L[m] + ' todavía no hay dato de ' + actual.anio + '. El MEFP publica el mes con unas seis a ocho semanas de rezago.';
+        }
+        document.getElementById('panel').innerHTML = h + PF.ctx(t);
+      }
+      panel(nM - 1);
+
+      PF.preguntas(document.getElementById('preguntas'), [
+        ['¿Cómo se lee este gráfico?', 'Cada línea suma el resultado del sector público mes a mes desde enero. Si la línea baja, el déficit se acumula. Comparar un año con otro <strong>en el mismo mes</strong> evita confundir la estacionalidad (hay meses de mucho gasto, como diciembre) con un cambio de tendencia.'],
+        ['¿Por qué diciembre cae tanto?', 'Al cierre del año se concentran pagos: aguinaldos, inversión pública que se ejecuta a último momento y transferencias. Por eso buena parte del déficit anual se forma en los últimos meses.'],
+        ['¿Bolivianos o % del PIB?', 'En <strong>bolivianos</strong> se ve el monto, pero la inflación agranda los años recientes. En <strong>% del PIB</strong> los años se comparan en su escala; el año en curso aparece recién cuando el INE publica su PIB.'],
+        ['¿De dónde salen los datos?', 'De las operaciones consolidadas del sector público no financiero que publica el MEFP cada mes (flujo de caja). Los meses del año en curso son preliminares y se revisan al publicar el mes siguiente.']
+      ]);
+      document.getElementById('fuente').innerHTML = 'Fuente: <a href="' + spnf.meta.pagina + '" target="_blank">MEFP — Operaciones consolidadas del SPNF</a> · <a href="' + pib.meta.pagina +
+        '" target="_blank">INE — PIB base 2017</a> · Elaboración: Centro de Estudios POPULI · Datos al: ' + PF.mes(spnf.meta.ultimo_mes) + ' (preliminar)';
+    }).catch(function (e) { document.getElementById('chart').innerHTML = '<div class="loading" style="color:#C71E1D">No se pudieron cargar los datos: ' + e.message + '</div>'; });
+  })();
+  </script>
 </body>
 </html>
