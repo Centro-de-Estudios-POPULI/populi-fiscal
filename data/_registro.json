@@ -52,6 +52,13 @@
   "ultimo_dato": "2025-T4",
   "url": "https://nube.ine.gob.bo/index.php/s/mvRnhfidKJeJfsv/download"
  },
+ "sip_cartera": {
+  "meses": 107,
+  "pagina": "https://www.aps.gob.bo/index.php?option=com_sppagebuilder&view=page&id=20",
+  "revisado": "2026-09-24 00:02",
+  "sin_lectura": 6,
+  "ultimo_dato": "2026-05"
+ },
  "spnf": {
   "archivos": 10,
   "corte": "JULIO 2026 (Preliminar)",

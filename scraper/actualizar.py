@@ -16,7 +16,7 @@ from pathlib import Path
 
 AQUI = Path(__file__).resolve().parent
 FUENTES = ["embi.py", "pib.py", "spnf.py", "bcb_financiamiento.py", "bcb_osf.py",
-           "deuda_externa.py", "deuda_externa_tgn.py", "deuda_interna.py"]
+           "deuda_externa.py", "deuda_externa_tgn.py", "deuda_interna.py", "aps_cartera.py"]
 DIARIO = ["embi.py"]
 DERIVADOS = ["conciliar.py", "indicadores.py"]
 

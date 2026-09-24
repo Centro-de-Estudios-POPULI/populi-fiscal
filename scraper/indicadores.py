@@ -58,6 +58,74 @@ def pct(x, base):
     return None if x is None or not base else round(100 * x / base, 2)
 
 
+# Grupos de la cartera del SIP para mostrar (los de aps_cartera.py, agrupados).
+SIP_GRUPOS = [
+    ("tgn", "Tesoro (TGN)", ("tgn_bonos", "tgn_sin_cupones", "tgn_obligatorios", "tgn_letras", "tgn_cupones")),
+    ("dpf", "Depósitos a plazo fijo", ("dpf",)),
+    ("bonos_privados", "Bonos bancarios, de largo plazo y otros", ("bonos_bancarios", "bonos_largo_plazo", "titularizacion",
+                                                                  "pagares", "bonos_municipales", "acciones", "otros")),
+    ("fondos", "Cuotas de fondos de inversión", ("cuotas_fondos",)),
+    ("bcb", "Banco Central", ("bcb",)),
+    ("exterior", "Exterior (incl. bonos soberanos)", ("soberanos_exterior", "exterior_otros", "exterior_sin_detalle")),
+]
+# Capital adeudado por el TGN (sin cupones sueltos, que son intereses por cobrar).
+TGN_CAPITAL = ("tgn_bonos", "tgn_sin_cupones", "tgn_obligatorios", "tgn_letras")
+
+
+def sip_bloque(di: dict) -> dict:
+    ruta = DATA / "sip_cartera.json"
+    if not ruta.exists():
+        return {}
+    d = json.loads(ruta.read_text(encoding="utf-8"))
+    meses = sorted(d["meses"])
+    comp = {k: [] for k, _, _ in SIP_GRUPOS}
+    moneda = {k: [] for k in ("BOB", "USD", "UFV", "MVDOL")}
+    valor, liquidez, tgn_nom_bs, tgn_mer_bs, tc_usado, dudoso, soberanos = [], [], [], [], [], [], []
+    for m in meses:
+        v = d["meses"][m]
+        vf = v["totales"].get("valor_fondos", {}).get("mercado") or None
+        valor.append(vf)
+        liquidez.append(v["totales"].get("liquidez", {}).get("mercado"))
+        for k, _, gs in SIP_GRUPOS:
+            comp[k].append(sum(f[4] for f in v["i"] if f[1] in gs))
+        for k in moneda:
+            moneda[k].append(sum(f[4] for f in v["i"] if f[2] == k))
+        soberanos.append(sum(f[4] for f in v["i"] if f[1] == "soberanos_exterior"))
+        # Tipo de cambio que usó la APS: el del testigo si es coherente con el régimen del
+        # mes; si no, el nominal de ese mes es dudoso (p. ej. sep-2021: la APS repitió el
+        # valor de mercado en la columna nominal) y no entra en el proxy.
+        tc_oficial = tipo_cambio(fin_de_mes(m))
+        tci = v.get("tc_implicito")
+        ok = tci is not None and abs(tci - tc_oficial) / tc_oficial < 0.01
+        tc = tci if ok else tc_oficial
+        tc_usado.append(tc)
+        dudoso.append(not ok)
+        cap_nom = sum(f[3] for f in v["i"] if f[1] in TGN_CAPITAL)
+        cap_mer = sum(f[4] for f in v["i"] if f[1] in TGN_CAPITAL)
+        tgn_nom_bs.append(None if not ok else round(cap_nom * tc / 1e6, 1))
+        tgn_mer_bs.append(round(cap_mer * tc / 1e6, 1))
+    # Proxy: papeles del TGN en los fondos (capital, en Bs) contra la deuda del TGN con el
+    # sector privado que informa el MEFP, mes a mes. Se usa el VALOR DE MERCADO: la columna
+    # «nominal» de la APS cambió de definición en el traspaso de las AFP a la Gestora (hasta
+    # may-2023 el nominal de los bonos con cupones supera ~9 % al de mercado; desde jun-2023
+    # casi coinciden) y la serie nominal salta; la de mercado es homogénea.
+    comparacion = []
+    for i, m in enumerate(meses):
+        if m in di["meses"]:
+            j = di["meses"].index(m)
+            priv = di["series"]["privado"][j]
+            sub = di["series"]["privado.mercado_financiero"][j]
+            comparacion.append({"mes": m, "sip_tgn_mercado": tgn_mer_bs[i], "sip_tgn_nominal": tgn_nom_bs[i],
+                                "mefp_privado": priv, "mefp_subasta": sub,
+                                "participacion": round(100 * tgn_mer_bs[i] / priv, 1) if priv else None})
+    return {"meses": meses, "valor_fondos_usd": valor, "liquidez_usd": liquidez,
+            "grupos": [{"clave": k, "nombre": n} for k, n, _ in SIP_GRUPOS], "composicion_usd": comp,
+            "moneda_usd": moneda, "soberanos_usd": soberanos, "tgn_capital_nominal_bs": tgn_nom_bs, "tgn_capital_mercado_bs": tgn_mer_bs,
+            "tc_usado": tc_usado, "nominal_dudoso": [m for m, x in zip(meses, dudoso) if x],
+            "sin_lectura": d["meta"].get("sin_lectura", {}), "comparacion_mefp": comparacion,
+            "fuente": d["meta"]["pagina"], "ultimo_mes": d["meta"]["ultimo_mes"]}
+
+
 def main() -> int:
     spnf, pib, bf, de, det, di, embi, osf = (cargar(n) for n in (
         "spnf.json", "pib.json", "bcb_financiamiento.json", "deuda_externa.json", "deuda_externa_tgn.json",
@@ -164,6 +232,9 @@ def main() -> int:
         "riesgo_pais": {"valor": embi["series"]["Bolivia"][-1], "fecha": embi["fechas"][-1],
                         "latinoamerica": embi["series"]["Latinoamérica"][-1]},
     }
+    # ── Fondos de pensiones (SIP, APS): composición y tenencia de papeles del TGN ─────
+    sip = sip_bloque(di)
+
     guardar_json("indicadores.json", {
         "meta": {"generado": dt.date.today().isoformat(), "ultimo_mes_spnf": ult,
                  "pib_hasta": pib["meta"]["ultimo_trimestre"],
@@ -175,6 +246,7 @@ def main() -> int:
                      "riesgo_pais": "spread del EMBI Global Diversified de Bolivia (J.P. Morgan vía BCRD)"}},
         "anual": anual, "acumulado": acumulado, "parcial": parcial, "kpis": kpis,
         "osf": {"meses": osf["meses"], "credito_neto_gc": osf["series"]["credito_neto_gobierno_central"]},
+        "sip": sip,
     })
     print(f"   indicadores {completos[0]}–{completos[-1]} (+ {ult} parcial) · "
           f"déficit {u['anio']}: {u['spnf']['global_pib']}% PIB · deuda bruta TGN: {kpis['deuda_bruta_tgn']['valor_pib']}% PIB")

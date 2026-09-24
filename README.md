@@ -28,6 +28,7 @@ de vez en cuando a los runners de GitHub: esa fuente conserva su último dato bu
 | `deuda_externa.py` | BCB, deuda externa pública (8 cuadros) | `deuda_externa.json` | trimestral |
 | `deuda_externa_tgn.py` | MEFP, deuda externa del TGN por acreedor | `deuda_externa_tgn.json` | mensual |
 | `deuda_interna.py` | MEFP, deuda interna del TGN por tenedor | `deuda_interna.json` | mensual |
+| `aps_cartera.py` | APS, cartera de los Fondos del SIP (PDF mensual) | `sip_cartera.json` | mensual |
 | `conciliar.py` | cruce BCB ↔ MEFP | `conciliacion.json`, `salidas/conciliacion.txt` | — |
 | `indicadores.py` | ratios, acumulados, encabezado | `indicadores.json` | — |
 
@@ -48,6 +49,9 @@ período llega.
 
 - Deuda interna del TGN anterior a diciembre de 2022 (el MEFP no la publica en su página).
 - Cuánto de la deuda del TGN tienen los fondos de pensiones: el MEFP la registra dentro
-  de «Mercado financiero (subasta)»; el BCB la agrega con aseguradoras y fondos de inversión.
+  de «Mercado financiero (subasta)». Se aproxima con la cartera del SIP que publica la APS
+  (valor de mercado: la columna nominal cambió de definición con el traspaso a la Gestora).
+  Seis meses de la APS no se pueden leer (PDF escaneado o con el gráfico sobre la tabla):
+  quedan como huecos declarados.
 - La brecha estable (≈ Bs 6.100–7.900 millones) entre el crédito bruto del BCB al Gobierno
   Central y la deuda del TGN con el BCB que informa el MEFP.
