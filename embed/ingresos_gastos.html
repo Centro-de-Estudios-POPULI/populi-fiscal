@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingresos y gastos · Monitor Fiscal POPULI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comun.css">
+<script src="lib/echarts.min.js"></script>
+<script src="comun.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1 class="hd-t">Ingresos y gastos</h1>
+    <p class="hd-s">De qué vive el sector público no financiero y en qué gasta, como porcentaje del PIB de cada año.</p>
+  </div>
+  <div class="ctl">
+    <div class="ctl-g"><span class="ctl-l">Ver</span><div class="seg" id="c-lado"></div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="leyenda" id="leyenda"></div>
+      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+    </div>
+    <aside class="lect">
+      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
+      <div class="lect-bd" id="lectura"></div>
+    </aside>
+  </div>
+  <details class="notas">
+    <summary>Cómo se calcula</summary>
+    <div>
+      <p>Flujos anuales del SPNF consolidado (caja, MEFP) divididos por el PIB nominal del mismo año (INE, base 2017).</p>
+      <p><strong>Venta de hidrocarburos</strong> son los ingresos de YPFB por ventas; <strong>impuestos sobre hidrocarburos</strong>, los tributos específicos del sector (IEHD y otros); <strong>tributarios</strong>, la recaudación del resto de los impuestos. <strong>Otros ingresos</strong> reúne transferencias recibidas, otros ingresos corrientes e ingresos de capital.</p>
+      <p><strong>Egresos de capital</strong> es, sobre todo, inversión pública. <strong>Intereses</strong> suma los de la deuda externa e interna. <strong>Otros corrientes</strong> incluye los gastos no identificados del cuadro oficial.</p>
+    </div>
+  </details>
+  <div class="fuente">
+    <span>Fuente: <a id="f-mefp" target="_blank" rel="noopener">MEFP, operaciones consolidadas del SPNF</a> · <a id="f-ine" target="_blank" rel="noopener">INE, PIB base 2017</a>. Elaboración: Centro de Estudios POPULI.</span>
+    <span id="f-corte"></span>
+  </div>
+</div>
+<script>
+(function () {
+  const estado = { lado: 'ingresos' };
+  const el = document.getElementById('chart');
+  // Orden de apilado (de la base hacia arriba) y color por categoría: fijo, nunca por rango.
+  const PARTES = {
+    ingresos: [['tributarios', 'Tributarios', 'pos'], ['venta_hidrocarburos', 'Venta de hidrocarburos (YPFB)', 'c3'],
+               ['impuestos_hidrocarburos', 'Impuestos sobre hidrocarburos', 'g1'], ['venta_otras_empresas', 'Ventas de otras empresas', 'g2'],
+               ['otros', 'Otros ingresos', 'g3']],
+    egresos: [['servicios_personales', 'Salarios', 'c3'], ['bienes_servicios', 'Bienes y servicios', 'g1'],
+              ['transferencias', 'Transferencias', 'g2'], ['otros_corrientes', 'Otros corrientes', 'g3'],
+              ['intereses', 'Intereses', 'neg'], ['capital', 'Egresos de capital (inversión)', 'pos']]
+  };
+
+  PF.cargar(['indicadores.json', 'spnf.json', 'pib.json']).then(function (r) {
+    const ind = r[0], spnf = r[1], pib = r[2];
+    const A = ind.anual;
+    document.getElementById('f-mefp').href = spnf.meta.pagina;
+    document.getElementById('f-ine').href = pib.meta.pagina;
+    document.getElementById('f-corte').textContent = 'Años completos hasta ' + A[A.length - 1].anio + ' (preliminar).';
+    document.getElementById('corte').textContent = A[A.length - 1].anio;
+
+    const g = PF.montar(el, function () {
+      const c = PF.c(), partes = PARTES[estado.lado], campo = estado.lado + '_pib';
+      PF.leyenda(document.getElementById('leyenda'), partes.map(function (p) { return { nombre: p[1], color: c[p[2]] }; }));
+      const totales = A.map(function (a) { return partes.reduce(function (s, p) { return s + (a[campo][p[0]] || 0); }, 0); });
+      return {
+        animationDuration: 500,
+        grid: PF.grid({ top: 24 }),
+        tooltip: PF.tooltip({
+          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } },
+          formatter: function (ps) {
+            const i = ps[0].dataIndex, a = A[i];
+            return '<b>' + a.anio + '</b> · ' + (estado.lado === 'ingresos' ? 'ingresos' : 'egresos') + ' del SPNF' +
+              partes.slice().reverse().map(function (p) { return PF.fila(c[p[2]], p[1], PF.num(a[campo][p[0]], 1) + ' %'); }).join('') +
+              '<div style="border-top:1px solid ' + c.line + ';margin-top:4px;padding-top:2px">' +
+              PF.fila(c.ink, 'Total', PF.num(totales[i], 1) + ' % del PIB', 'linea') + '</div>';
+          }
+        }),
+        xAxis: PF.ejeX(A.map(function (a) { return String(a.anio); })),
+        yAxis: PF.ejeY(function (v) { return PF.num(v, 0) + ' %'; }),
+        series: partes.map(function (p, k) {
+          const tope = k === partes.length - 1;
+          return {
+            type: 'bar', name: p[1], stack: 'x', barMaxWidth: 40, barCategoryGap: '34%',
+            itemStyle: { color: c[p[2]], borderColor: c.card, borderWidth: 1 },
+            emphasis: { focus: 'series' },
+            data: A.map(function (a, i) {
+              return { value: a[campo][p[0]],
+                       label: tope ? { show: true, position: 'top', color: c.ink, fontFamily: 'JetBrains Mono', fontSize: 10.5,
+                                       fontWeight: 600, formatter: function () { return PF.num(totales[i], 1); } } : { show: false } };
+            })
+          };
+        })
+      };
+    });
+
+    PF.segmento(document.getElementById('c-lado'), [['ingresos', 'Ingresos'], ['egresos', 'Egresos']], estado.lado,
+      function (v) { estado.lado = v; g.redibujar(); lectura(); });
+
+    function lectura() {
+      const u = A[A.length - 1], p0 = A[0], s = u.spnf;
+      let h;
+      if (estado.lado === 'ingresos') {
+        h = '<div class="dato"><div class="dato-l">Ingresos totales ' + u.anio + '</div>' +
+          '<div class="dato-v">' + PF.num(s.ingresos_pib, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">En ' + p0.anio + ' eran <strong>' + PF.num(p0.spnf.ingresos_pib, 1) + ' %</strong>: ' +
+          PF.num(p0.spnf.ingresos_pib - s.ingresos_pib, 1) + ' puntos del PIB menos para financiar el mismo Estado.</div></div>';
+        h += '<div class="dato"><div class="dato-l">Hidrocarburos: ventas de YPFB</div>' +
+          '<div class="dato-v">' + PF.num(u.ingresos_pib.venta_hidrocarburos, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">' + p0.anio + ': ' + PF.num(p0.ingresos_pib.venta_hidrocarburos, 1) + ' %. Impuestos sobre hidrocarburos: ' +
+          PF.num(u.ingresos_pib.impuestos_hidrocarburos, 1) + ' % (' + p0.anio + ': ' + PF.num(p0.ingresos_pib.impuestos_hidrocarburos, 1) + ' %).</div></div>';
+        h += '<div class="dato"><div class="dato-l">Recaudación tributaria</div>' +
+          '<div class="dato-v">' + PF.num(u.ingresos_pib.tributarios, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">' + p0.anio + ': ' + PF.num(p0.ingresos_pib.tributarios, 1) + ' %.</div></div>';
+      } else {
+        h = '<div class="dato"><div class="dato-l">Egresos totales ' + u.anio + '</div>' +
+          '<div class="dato-v">' + PF.num(s.egresos_pib, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">En ' + p0.anio + ': <strong>' + PF.num(p0.spnf.egresos_pib, 1) + ' %</strong>. La brecha con los ingresos (' +
+          PF.num(s.egresos_pib - s.ingresos_pib, 1) + ' puntos) es el déficit.</div></div>';
+        h += '<div class="dato"><div class="dato-l">Intereses de la deuda</div>' +
+          '<div class="dato-v neg">' + PF.num(u.egresos_pib.intereses, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">Se llevan <strong>' + PF.num(s.intereses_sobre_ingresos, 1) + ' de cada 100 bolivianos</strong> que ingresan. En ' + p0.anio +
+          ' eran ' + PF.num(p0.spnf.intereses_sobre_ingresos, 1) + '.</div></div>';
+        h += '<div class="dato"><div class="dato-l">Egresos de capital (inversión)</div>' +
+          '<div class="dato-v pos">' + PF.num(u.egresos_pib.capital, 1) + ' %<small>del PIB</small></div>' +
+          '<div class="dato-d">' + p0.anio + ': ' + PF.num(p0.egresos_pib.capital, 1) + ' %. Salarios ' + u.anio + ': ' + PF.num(u.egresos_pib.servicios_personales, 1) + ' %.</div></div>';
+      }
+      document.getElementById('lectura').innerHTML = h;
+    }
+    lectura();
+  }).catch(function (e) { PF.error(el, e); });
+})();
+</script>
+</body>
+</html>

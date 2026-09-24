@@ -1,0 +1,63 @@
+{
+ "bcb_financiamiento": {
+  "huella": "5d2ac681375567f3",
+  "revisado": "2026-09-23 15:11",
+  "ultimo_dato": "2026-08",
+  "url": "https://www.bcb.gob.bo/webdocs/sector_monetario/Cr%C3%A9ditos%20y%20Dep%C3%B3sitos/BCB/3.%20Financiamiento%20neto%20al%20Sector%20P%C3%BAblico.xlsx"
+ },
+ "bcb_osf": {
+  "huella": "aaaab468cfb1140c",
+  "revisado": "2026-09-23 22:36",
+  "ultimo_dato": "2025-12",
+  "url": "https://www.bcb.gob.bo/webdocs/sector_monetario/Balances%20Consolidados/15.%20Cuentas%20monetarias%20de%20Otras%20Sociedades%20Financieras.xlsx"
+ },
+ "deuda_externa": {
+  "discrepancias_fuente": 5,
+  "huellas": {
+   "desembolsos_acreedor": "90c2a9481c4eda57",
+   "desembolsos_deudor": "117c885a9d15387e",
+   "saldo_acreedor": "aedb3f2cca1f7725",
+   "saldo_deudor": "63225ed858dafa6f",
+   "servicio_acreedor": "5331d7cfaeafb8f1",
+   "servicio_deudor": "6862e19d67dad113",
+   "transferencia_neta_acreedor": "2e151301648fec73",
+   "transferencia_neta_deudor": "fef311ada8093630"
+  },
+  "pagina": "https://www.bcb.gob.bo/?q=content/sector-externo-0",
+  "revisado": "2026-09-23 15:13",
+  "ultimo_dato": "2026-T2"
+ },
+ "deuda_externa_tgn": {
+  "archivos": 6,
+  "pagina": "https://www.economiayfinanzas.gob.bo/viceministerios/vtcp/deuda-externa-tgn?page=0",
+  "revisado": "2026-09-23 22:32",
+  "ultimo_dato": "2026-07"
+ },
+ "deuda_interna": {
+  "archivos": 7,
+  "pagina": "https://www.economiayfinanzas.gob.bo/viceministerios/vtcp/deuda-interna-tgn?title=&field_fecha_value=&page=0",
+  "revisado": "2026-09-23 15:16",
+  "ultimo_dato": "2026-07"
+ },
+ "embi": {
+  "huella": "d3f2bd9bbbe92f25",
+  "observaciones_bolivia": 3452,
+  "revisado": "2026-09-23 22:48",
+  "ultimo_dato": "2026-09-22",
+  "url": "https://cdn.bancentral.gov.do/documents/entorno-internacional/documents/Serie_Historica_Spread_del_EMBI.xlsx"
+ },
+ "pib": {
+  "huella": "a7284cdd1e376bf0",
+  "revisado": "2026-09-23 15:08",
+  "ultimo_dato": "2025-T4",
+  "url": "https://nube.ine.gob.bo/index.php/s/mvRnhfidKJeJfsv/download"
+ },
+ "spnf": {
+  "archivos": 10,
+  "corte": "JULIO 2026 (Preliminar)",
+  "meses": 115,
+  "pagina": "https://www.economiayfinanzas.gob.bo/index.php/ejecucion-sector-publico-no-financiero",
+  "revisado": "2026-09-23 15:10",
+  "ultimo_dato": "2026-07"
+ }
+}

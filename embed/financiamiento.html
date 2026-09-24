@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financiamiento del BCB al sector público · Monitor Fiscal POPULI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comun.css">
+<script src="lib/echarts.min.js"></script>
+<script src="comun.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1 class="hd-t">Financiamiento del Banco Central al sector público</h1>
+    <p class="hd-s">Cuánto le presta el BCB al Estado, descontado lo que el Estado tiene depositado en el propio BCB. Es la parte del déficit que se paga con emisión.</p>
+  </div>
+  <div class="ctl">
+    <div class="ctl-g"><span class="ctl-l">Desde</span><div class="seg" id="c-desde"></div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="leyenda" id="leyenda"></div>
+      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+    </div>
+    <aside class="lect">
+      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
+      <div class="lect-bd" id="lectura"></div>
+    </aside>
+  </div>
+  <details class="notas">
+    <summary>Cómo se calcula</summary>
+    <div>
+      <p><strong>Crédito neto</strong> = crédito bruto del BCB al sector − depósitos de ese sector en el BCB. Saldo a fin de mes. Negativo significa que el sector tiene más depositado en el BCB de lo que le debe.</p>
+      <p><strong>Gobierno Central</strong> es sobre todo el Tesoro (TGN). <strong>Empresas públicas</strong>, las nacionales (YPFB, ENDE y otras). Seguridad social y gobiernos locales suelen tener saldo negativo: depositan más de lo que deben.</p>
+      <p>En <strong>% del PIB</strong> se usa el saldo de diciembre sobre el PIB nominal del año (INE, base 2017). El mismo archivo del BCB alimenta el gráfico de monetización del Monitor Monetario; acá se lee cada columna por su rótulo y se verifica que bruto − depósitos = neto y que los sectores sumen el total.</p>
+    </div>
+  </details>
+  <div class="fuente">
+    <span>Fuente: <a id="f-bcb" target="_blank" rel="noopener">BCB, financiamiento neto al sector público</a> · INE, PIB base 2017. Elaboración: Centro de Estudios POPULI.</span>
+    <span id="f-corte"></span>
+  </div>
+</div>
+<script>
+(function () {
+  const estado = { desde: '2017-01' };
+  const el = document.getElementById('chart');
+  PF.cargar(['bcb_financiamiento.json', 'indicadores.json']).then(function (r) {
+    const bf = r[0], ind = r[1];
+    const S = bf.series;
+    document.getElementById('f-bcb').href = bf.meta.pagina;
+    document.getElementById('f-corte').textContent = 'Datos a ' + PF.mesLargo(bf.meta.ultimo_mes) + '.';
+    document.getElementById('corte').textContent = PF.mes(bf.meta.ultimo_mes);
+
+    const g = PF.montar(el, function () {
+      const c = PF.c();
+      const i0 = bf.meses.indexOf(estado.desde), M = bf.meses.slice(i0);
+      const s = function (sec) { return S[sec].neto.slice(i0); };
+      const otros = M.map(function (_, i) { return S.seguridad_social.neto[i0 + i] + S.gobiernos_locales.neto[i0 + i]; });
+      const partes = [['Gobierno Central (TGN)', s('gobierno_central'), c.neg], ['Empresas públicas', s('empresas_publicas'), c.c3],
+                      ['Seguridad social y gobiernos locales', otros, c.g2]];
+      PF.leyenda(document.getElementById('leyenda'), partes.map(function (p) { return { nombre: p[0], color: p[2] }; })
+        .concat([{ nombre: 'Total neto', color: c.ink, forma: 'linea' }]));
+      return {
+        animationDuration: 500,
+        grid: PF.grid({ top: 20 }),
+        tooltip: PF.tooltip({
+          formatter: function (ps) {
+            const i = ps[0].dataIndex;
+            return '<b>' + PF.mes(M[i]) + '</b> · millones de Bs' +
+              partes.map(function (p) { return PF.fila(p[2], p[0], PF.num(p[1][i], 0)); }).join('') +
+              '<div style="border-top:1px solid ' + c.line + ';margin-top:4px;padding-top:2px">' +
+              PF.fila(c.ink, 'Total neto', PF.num(S.total.neto[i0 + i], 0), 'linea') + '</div>';
+          }
+        }),
+        xAxis: PF.ejeX(M.map(PF.mes), { axisLabel: { color: c.muted, fontSize: 10.5, interval: function (i) { return M[i].endsWith('-01') && (M.length < 150 || (+M[i].slice(0, 4)) % 2 === 1); }, formatter: function (v) { return v.slice(-4); } } }),
+        yAxis: PF.ejeY(function (v) { return PF.num(v / 1000, 0) + ' mil'; }),
+        series: partes.map(function (p) {
+          return { type: 'bar', stack: 'x', name: p[0], data: p[1], barCategoryGap: '12%', itemStyle: { color: p[2] }, emphasis: { focus: 'series' } };
+        }).concat([{ type: 'line', name: 'Total neto', data: S.total.neto.slice(i0), showSymbol: false, lineStyle: { color: c.ink, width: 2 }, itemStyle: { color: c.ink }, z: 5,
+                     markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: c.muted, width: 1, type: 'solid' }, label: { show: false } } }])
+      };
+    });
+    PF.segmento(document.getElementById('c-desde'), [['2017-01', '2017'], ['2006-01', '2006'], ['2000-01', '2000']], estado.desde,
+      function (v) { estado.desde = v; g.redibujar(); });
+
+    const n = bf.meses.length - 1, hace = n - 12, A = ind.anual, u = A[A.length - 1], p0 = A[0];
+    const tot = S.total.neto[n];
+    let h = '<div class="dato"><div class="dato-l">Crédito neto al sector público, ' + PF.mes(bf.meses[n]) + '</div>' +
+      '<div class="dato-v neg">Bs ' + PF.num(tot, 0) + '<small>millones</small></div>' +
+      '<div class="dato-d">Doce meses antes: Bs ' + PF.num(S.total.neto[hace], 0) + ' millones (' + PF.signo(tot - S.total.neto[hace], 0) + ' millones en un año).</div></div>';
+    h += '<div class="dato"><div class="dato-l">En % del PIB, fin de ' + u.anio + '</div>' +
+      '<div class="dato-v">' + PF.num(u.bcb_neto.total_pib, 1) + ' %</div>' +
+      '<div class="dato-d">A fin de ' + p0.anio + ' era ' + PF.num(p0.bcb_neto.total_pib, 1) + ' % del PIB.</div></div>';
+    h += '<div class="dato"><div class="dato-l">Quién lo recibe, ' + PF.mes(bf.meses[n]) + '</div>' +
+      '<div class="dato-d">Tesoro (Gobierno Central) <strong>Bs ' + PF.num(S.gobierno_central.neto[n], 0) + ' millones</strong> · Empresas públicas <strong>Bs ' +
+      PF.num(S.empresas_publicas.neto[n], 0) + ' millones</strong>. Seguridad social y gobiernos locales tienen depositado en el BCB más de lo que le deben (Bs ' +
+      PF.num(S.seguridad_social.neto[n] + S.gobiernos_locales.neto[n], 0) + ' millones netos).</div></div>';
+    document.getElementById('lectura').innerHTML = h;
+  }).catch(function (e) { PF.error(el, e); });
+})();
+</script>
+</body>
+</html>

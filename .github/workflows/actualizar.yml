@@ -1,0 +1,51 @@
+name: Actualizar Monitor Fiscal
+
+on:
+  schedule:
+    # Riesgo país: el BCRD actualiza el EMBI casi todos los días hábiles.
+    - cron: '30 12 * * 1-5'
+    # Todo lo demás (MEFP, BCB, INE) se publica mensual o trimestral: basta una vez por semana,
+    # el lunes. Una segunda corrida el jueves cubre los días en que el WAF del BCB rechaza al runner.
+    - cron: '0 13 * * 1,4'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actualizar-monitor-fiscal
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias
+        run: pip install -r scraper/requirements.txt
+
+      - name: Correr scrapers
+        run: |
+          if [ "${{ github.event.schedule }}" = "30 12 * * 1-5" ]; then
+            python scraper/actualizar.py --diario
+          else
+            python scraper/actualizar.py
+          fi
+
+      - name: Publicar los datos (aunque algo haya fallado)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ salidas/
+          if git diff --cached --quiet; then
+            echo "Sin cambios en los datos."
+          else
+            git commit -m "data: actualización automática $(date -u +%Y-%m-%d)"
+            git push
+          fi

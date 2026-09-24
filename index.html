@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monitor Fiscal · Centro de Estudios POPULI</title>
+<meta name="description" content="Las cuentas del Estado boliviano: resultado fiscal, ingresos y gastos, deuda externa e interna, financiamiento del Banco Central y riesgo país. Datos oficiales, actualización automática.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="embed/comun.css">
+<style>
+  .wrap { max-width: 980px; }
+  h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 2.2rem; line-height: 1.1; margin: 10px 0 8px; }
+  .intro { color: var(--muted); max-width: 70ch; font-size: .95rem; }
+  .lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 24px 0; }
+  .lista a { display: block; background: var(--card); border: 1px solid var(--line); padding: 14px 16px; text-decoration: none; color: var(--ink); border-top: 3px solid var(--accent); }
+  .lista a:hover { background: var(--cream); }
+  .lista b { font-family: 'Playfair Display', Georgia, serif; font-size: 1.05rem; display: block; margin-bottom: 4px; }
+  .lista span { font-size: .8rem; color: var(--muted); }
+  h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 1.25rem; margin: 22px 0 8px; }
+  ul.f { margin: 0 0 0 18px; font-size: .86rem; color: var(--muted); } ul.f li { margin: 4px 0; }
+  ul.f a { color: var(--accent-ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="ctl-l" style="margin-top:8px">Centro de Estudios POPULI · Monitores</p>
+  <h1>Monitor Fiscal</h1>
+  <p class="intro">Las cuentas del Estado boliviano desde 2017, con la misma regla que los otros monitores: cada número sale de un script que lee la fuente oficial, se verifica contra sus propias sumas y dice de dónde viene.</p>
+  <div class="lista">
+    <a href="embed/resultado.html"><b>Resultado fiscal</b><span>Déficit global y primario del SPNF, Gobierno General y Empresas Públicas, en % del PIB.</span></a>
+    <a href="embed/acumulado.html"><b>El año, mes a mes</b><span>El resultado acumulado desde enero, una línea por año.</span></a>
+    <a href="embed/ingresos_gastos.html"><b>Ingresos y gastos</b><span>De qué vive el sector público y en qué gasta, en % del PIB.</span></a>
+    <a href="embed/deuda_externa.html"><b>Deuda externa pública</b><span>Saldo trimestral por acreedor y por deudor; los acreedores del Tesoro.</span></a>
+    <a href="embed/deuda_interna.html"><b>Deuda interna del Tesoro</b><span>Quién tiene los papeles del Tesoro: el BCB, el mercado, los fondos.</span></a>
+    <a href="embed/financiamiento.html"><b>Financiamiento del Banco Central</b><span>Crédito neto del BCB al Tesoro y a las empresas públicas.</span></a>
+    <a href="embed/riesgo_pais.html"><b>Riesgo país</b><span>El spread del EMBI de Bolivia, diario, y la comparación regional.</span></a>
+  </div>
+  <h2>Fuentes</h2>
+  <ul class="f">
+    <li><a href="https://www.economiayfinanzas.gob.bo/index.php/ejecucion-sector-publico-no-financiero">MEFP — operaciones consolidadas del SPNF</a> (mensual, desde 2017)</li>
+    <li><a href="https://www.economiayfinanzas.gob.bo/viceministerios/vtcp/deuda-interna-tgn">MEFP — deuda interna del TGN</a> y <a href="https://www.economiayfinanzas.gob.bo/viceministerios/vtcp/deuda-externa-tgn">deuda externa del TGN</a></li>
+    <li><a href="https://www.bcb.gob.bo/?q=content/sector-externo-0">BCB — deuda externa pública</a> y <a href="https://www.bcb.gob.bo/?q=content/sector-monetario">financiamiento al sector público</a></li>
+    <li><a href="https://www.ine.gob.bo/referencia2017/pib_trimestral.html">INE — PIB nominal, año de referencia 2017</a></li>
+    <li><a href="https://www.bancentral.gov.do/a/d/2585-entorno-internacional">Banco Central de la República Dominicana — serie histórica del EMBI</a></li>
+  </ul>
+  <h2>Controles</h2>
+  <ul class="f">
+    <li>Cada cuadro se lee por sus rótulos, no por posiciones fijas, y se verifica que sume: ingresos − egresos = resultado; financiamiento = externo + interno; SPNF = Gobierno General + Empresas Públicas; deuda por deudor = deuda por acreedor.</li>
+    <li>Las dos fuentes oficiales se cruzan: la deuda externa del TGN (MEFP) coincide con la del Gobierno Central (BCB) en cada trimestre. <a href="salidas/conciliacion.txt">Ver la conciliación</a>.</li>
+    <li>Si una fuente deja de avanzar, la corrida se marca con error; nunca se publica una cifra de reserva.</li>
+  </ul>
+  <div class="fuente" style="margin-top:24px"><span>Elaboración: Centro de Estudios POPULI · <a href="https://populi.org.bo/monitor-fiscal/">populi.org.bo/monitor-fiscal</a></span></div>
+</div>
+</body>
+</html>

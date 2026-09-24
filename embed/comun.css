@@ -1,0 +1,108 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   Monitor Fiscal POPULI — estilos comunes de los gráficos incrustados.
+
+   Reglas de la casa que se cumplen acá y en ningún otro lado:
+   - Filos rectos: border-radius 0 en TODO (también tooltip y marcadores de ECharts,
+     que llevan el radio en línea: ver comun.js).
+   - Un solo acento de interfaz por página: el naranja del fiscal (#E57D22; #EE9B00 en
+     oscuro). Los DATOS no usan el acento: rojo = déficit / lo que se debe, turquesa =
+     superávit / lo que entra, naranja = tercera serie; el resto, grises escalonados.
+     Paleta validada con validate_palette.js (claro sobre #FFFFFF, oscuro sobre #141414).
+   - Lectura del indicador SIEMPRE a la derecha (3fr + 2fr).
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg: #FAF8F3; --card: #FFFFFF; --ink: #001219; --muted: #5C6B70; --grid: #E2DDD3;
+  --line: #E2DDD3; --cream: #F5EFE0; --accent: #E57D22; --accent-ink: #B35A10;
+  --neg: #C71E1D; --pos: #0A9396; --c3: #E57D22;
+  --g1: #5C6B70; --g2: #8A9699; --g3: #B9BEC0;
+  --head: #3D2B1F;
+}
+[data-theme="dark"] {
+  --bg: #080808; --card: #141414; --ink: #E2E8F0; --muted: #8A9699; --grid: #26303D;
+  --line: #2A3A50; --cream: #1A2230; --accent: #EE9B00; --accent-ink: #EE9B00;
+  --neg: #C71E1D; --pos: #0A9396; --c3: #D9761E;
+  --g1: #8A9699; --g2: #6E7A7D; --g3: #4A5457;
+  --head: #1E1410;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; border-radius: 0 !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: 'Inter', system-ui, sans-serif; line-height: 1.55; -webkit-font-smoothing: antialiased; transition: background .2s, color .2s; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 24px; }
+
+/* Encabezado de la sección */
+.hd { margin-bottom: 14px; }
+.hd-t { font-family: 'Playfair Display', Georgia, serif; font-size: 1.55rem; font-weight: 700; line-height: 1.15; display: flex; gap: 10px; align-items: center; }
+.hd-t::before { content: ""; width: 4px; height: 26px; background: var(--accent); flex-shrink: 0; }
+.hd-s { font-size: .82rem; color: var(--muted); margin-top: 4px; padding-left: 14px; max-width: 72ch; }
+
+/* Controles: UNA fila, arriba del gráfico */
+.ctl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin: 0 0 12px 14px; }
+.ctl-g { display: flex; align-items: center; gap: 8px; }
+.ctl-l { font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); background: var(--card); }
+.seg button { font: 600 .7rem 'Inter', sans-serif; padding: 6px 12px; min-height: 32px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+[data-theme="dark"] .seg button[aria-pressed="true"] { color: #111; }
+
+/* Gráfico + lectura */
+.grid { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; align-items: stretch; }
+.card { background: var(--card); border: 1px solid var(--line); padding: 14px 14px 8px; display: flex; flex-direction: column; min-height: 460px; }
+.chart { flex: 1; min-height: 400px; width: 100%; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .72rem; color: var(--muted); margin-bottom: 6px; }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.leyenda i { width: 12px; height: 12px; display: inline-block; }
+.leyenda i.linea { height: 0; border-top: 2px solid; width: 16px; }
+.leyenda i.punto { width: 9px; height: 9px; border: 2px solid; background: var(--card); }
+
+.lect { background: var(--card); border: 1px solid var(--line); display: flex; flex-direction: column; }
+.lect-hd { background: var(--head); color: rgba(255,255,255,.85); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lect-hd b { font-size: .6rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.lect-hd span { font: 600 .66rem 'JetBrains Mono', monospace; color: #F6C27A; }
+.lect-bd { padding: 14px; flex: 1; }
+.dato { padding: 0 0 12px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+.dato:last-child { border-bottom: 0; margin-bottom: 0; }
+.dato-l { font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.dato-v { font: 700 1.35rem 'JetBrains Mono', monospace; line-height: 1.25; margin: 2px 0; }
+.dato-v small { font-size: .7rem; font-weight: 600; color: var(--muted); margin-left: 4px; }
+.dato-d { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+.dato-d strong { color: var(--ink); }
+.neg { color: var(--neg); } .pos { color: var(--pos); }
+
+/* Notas y fuente */
+.notas { margin-top: 14px; border: 1px solid var(--line); background: var(--card); }
+.notas summary { cursor: pointer; padding: 10px 14px; font-size: .74rem; font-weight: 700; color: var(--ink); list-style: none; display: flex; justify-content: space-between; }
+.notas summary::after { content: "+"; color: var(--accent-ink); font-weight: 700; }
+.notas[open] summary::after { content: "−"; }
+.notas div { padding: 0 14px 12px; font-size: .76rem; color: var(--muted); line-height: 1.6; }
+.notas div p + p { margin-top: 6px; }
+.notas strong { color: var(--ink); }
+.fuente { margin-top: 10px; font-size: .68rem; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; }
+.fuente a { color: var(--accent-ink); font-weight: 600; text-decoration: none; }
+.fuente a:hover { text-decoration: underline; }
+.tabla-wrap { overflow-x: auto; }
+table.t { border-collapse: collapse; width: 100%; font-size: .74rem; }
+table.t th, table.t td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.t th:first-child, table.t td:first-child { text-align: left; }
+table.t th { font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+table.t td { font-family: 'JetBrains Mono', monospace; }
+
+.cargando { padding: 80px 0; text-align: center; color: var(--muted); font-size: .8rem; }
+.error { padding: 40px 16px; text-align: center; color: var(--neg); font-size: .8rem; }
+
+/* Tooltip de ECharts: el radio va en línea (ver comun.js); los marcadores de color, acá. */
+.tt span { border-radius: 0 !important; }
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .card { min-height: 380px; }
+  .chart { min-height: 330px; }
+}
+@media (max-width: 560px) {
+  .wrap { padding: 14px 12px 18px; }
+  .hd-t { font-size: 1.22rem; }
+  .ctl { margin-left: 0; }
+  .seg button { padding: 6px 9px; font-size: .66rem; }
+  .dato-v { font-size: 1.15rem; }
+}

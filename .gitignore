@@ -1,0 +1,5 @@
+# Descargas crudas: se bajan en cada corrida, no se versionan
+fuentes/
+__pycache__/
+*.pyc
+.DS_Store

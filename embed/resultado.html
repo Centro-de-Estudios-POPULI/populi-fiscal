@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resultado fiscal · Monitor Fiscal POPULI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="comun.css">
+<script src="lib/echarts.min.js"></script>
+<script src="comun.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1 class="hd-t">Resultado fiscal</h1>
+    <p class="hd-s">Ingresos menos gastos del sector público no financiero, año por año. El punto marca el resultado primario: el mismo cálculo sin contar los intereses de la deuda.</p>
+  </div>
+  <div class="ctl">
+    <div class="ctl-g"><span class="ctl-l">Sector</span><div class="seg" id="c-sector"></div></div>
+    <div class="ctl-g"><span class="ctl-l">Unidad</span><div class="seg" id="c-unidad"></div></div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="leyenda" id="leyenda"></div>
+      <div class="chart" id="chart"><div class="cargando">Cargando…</div></div>
+    </div>
+    <aside class="lect">
+      <div class="lect-hd"><b>Lectura del indicador</b><span id="corte"></span></div>
+      <div class="lect-bd" id="lectura"></div>
+    </aside>
+  </div>
+  <details class="notas">
+    <summary>Cómo se calcula</summary>
+    <div>
+      <p><strong>Resultado global</strong> = ingresos totales − egresos totales del sector público no financiero (SPNF), en flujo de caja. Negativo es déficit. Coincide, con signo contrario, con el financiamiento que el sector tomó en el año.</p>
+      <p><strong>Resultado primario</strong> = resultado global + intereses de la deuda externa e interna. Mide la gestión del año sin el peso de la deuda acumulada.</p>
+      <p><strong>Sectores.</strong> El SPNF consolida al Gobierno General (nivel central, gobiernos subnacionales, seguridad social, universidades) y a las Empresas Públicas. Las transferencias entre ambos se cancelan: por eso el resultado del SPNF es la suma de los dos.</p>
+      <p><strong>PIB.</strong> Nominal, año de referencia 2017 (INE). La serie empieza en 2017 porque con el cambio de base el nivel del PIB cambió: mezclar bases alteraría cualquier ratio. El año en curso se compara en bolivianos hasta que el INE publique su PIB.</p>
+      <p><strong>Control.</strong> Antes de publicar, el scraper verifica mes por mes que cada cuadro sume: ingresos − egresos = resultado; financiamiento = externo + interno; SPNF = Gobierno General + Empresas Públicas.</p>
+    </div>
+  </details>
+  <div class="fuente">
+    <span>Fuente: <a id="f-mefp" target="_blank" rel="noopener">MEFP, operaciones consolidadas del SPNF</a> · <a id="f-ine" target="_blank" rel="noopener">INE, PIB base 2017</a>. Elaboración: Centro de Estudios POPULI.</span>
+    <span id="f-corte"></span>
+  </div>
+</div>
+<script>
+(function () {
+  const SECTORES = [['spnf', 'SPNF'], ['gg', 'Gobierno General'], ['ep', 'Empresas Públicas']];
+  const NOMBRE = { spnf: 'sector público no financiero', gg: 'Gobierno General', ep: 'Empresas Públicas' };
+  const estado = { sector: 'spnf', unidad: 'pib' };
+  const el = document.getElementById('chart');
+
+  PF.cargar(['indicadores.json', 'spnf.json', 'pib.json']).then(function (r) {
+    const ind = r[0], spnf = r[1], pib = r[2];
+    const A = ind.anual;
+    document.getElementById('f-mefp').href = spnf.meta.pagina;
+    document.getElementById('f-ine').href = pib.meta.pagina;
+    document.getElementById('f-corte').textContent = 'Datos a ' + PF.mesLargo(spnf.meta.ultimo_mes) + ' (preliminar).';
+    document.getElementById('corte').textContent = A[A.length - 1].anio;
+
+    function serie(clave) {
+      return A.map(function (a) {
+        const s = a[estado.sector];
+        return estado.unidad === 'pib' ? s[clave + '_pib'] : s[clave];
+      });
+    }
+    const fmt = function (v) { return estado.unidad === 'pib' ? PF.num(v, 1) + ' %' : PF.num(v, 0); };
+
+    const g = PF.montar(el, function () {
+      const c = PF.c(), gl = serie('global'), pr = serie('primario');
+      const peor = gl.indexOf(Math.min.apply(null, gl)), ult = gl.length - 1;
+      PF.leyenda(document.getElementById('leyenda'), [
+        { nombre: 'Déficit (resultado global)', color: c.neg }, { nombre: 'Superávit', color: c.pos },
+        { nombre: 'Resultado primario', color: c.ink, forma: 'punto' }]);
+      return {
+        animationDuration: 500, textStyle: { fontFamily: 'Inter' },
+        grid: PF.grid({ top: 26 }),
+        tooltip: PF.tooltip({
+          axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(128,128,128,.08)' } },
+          formatter: function (ps) {
+            const i = ps[0].dataIndex, a = A[i], s = a[estado.sector];
+            const inter = estado.unidad === 'pib' ? (s.global_pib != null && s.primario_pib != null ? s.primario_pib - s.global_pib : null)
+                                                  : s.primario - s.global;
+            return '<b>' + a.anio + '</b> · ' + NOMBRE[estado.sector] +
+              PF.fila(gl[i] < 0 ? c.neg : c.pos, 'Resultado global', fmt(gl[i])) +
+              PF.fila(c.ink, 'Resultado primario', fmt(pr[i]), 'linea') +
+              PF.fila(c.muted, 'Intereses', fmt(inter), 'linea');
+          }
+        }),
+        xAxis: PF.ejeX(A.map(function (a) { return String(a.anio); })),
+        yAxis: PF.ejeY(function (v) { return estado.unidad === 'pib' ? PF.num(v, 0) + ' %' : PF.num(v / 1000, 0) + ' mil'; }),
+        series: [
+          { type: 'bar', name: 'Resultado global', barMaxWidth: 38, barCategoryGap: '34%',
+            data: gl.map(function (v, i) {
+              return { value: v, itemStyle: { color: v < 0 ? c.neg : c.pos },
+                       label: { show: i === ult || i === peor, position: v < 0 ? 'bottom' : 'top', color: c.ink,
+                                fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: 600, formatter: function () { return fmt(v); } } };
+            }),
+            markLine: { silent: true, symbol: 'none', data: [{ yAxis: 0 }], lineStyle: { color: c.muted, width: 1, type: 'solid' }, label: { show: false } } },
+          { type: 'line', name: 'Resultado primario', data: pr, symbol: 'rect', symbolSize: 9, showSymbol: true,
+            lineStyle: { width: 0 }, itemStyle: { color: c.card, borderColor: c.ink, borderWidth: 2 }, z: 5 }
+        ]
+      };
+    });
+
+    PF.segmento(document.getElementById('c-sector'), SECTORES, estado.sector, function (v) { estado.sector = v; g.redibujar(); lectura(); });
+    PF.segmento(document.getElementById('c-unidad'), [['pib', '% del PIB'], ['bs', 'Millones de Bs']], estado.unidad,
+      function (v) { estado.unidad = v; g.redibujar(); });
+
+    function lectura() {
+      const u = A[A.length - 1], p = A[A.length - 2], s = u[estado.sector], sp = p[estado.sector];
+      const cls = function (v) { return v < 0 ? 'neg' : 'pos'; };
+      const texto = s.global < 0 ? 'déficit' : 'superávit';
+      let h = '<div class="dato"><div class="dato-l">Resultado global ' + u.anio + '</div>' +
+        '<div class="dato-v ' + cls(s.global) + '">' + PF.num(s.global_pib, 1) + ' %<small>del PIB</small></div>' +
+        '<div class="dato-d">Un ' + texto + ' de <strong>Bs ' + PF.num(Math.abs(s.global), 0) + ' millones</strong> (' + NOMBRE[estado.sector] +
+        '). En ' + p.anio + ' había sido ' + PF.num(sp.global_pib, 1) + ' %.</div></div>';
+      h += '<div class="dato"><div class="dato-l">Resultado primario ' + u.anio + '</div>' +
+        '<div class="dato-v ' + cls(s.primario) + '">' + PF.num(s.primario_pib, 1) + ' %<small>del PIB</small></div>' +
+        '<div class="dato-d">La distancia con el global (' + PF.num(s.primario_pib - s.global_pib, 1) + ' puntos del PIB) es lo que ese año se pagó de intereses.</div></div>';
+      if (estado.sector === 'spnf') {
+        h += '<div class="dato"><div class="dato-l">Quién pone el resultado, ' + u.anio + '</div>' +
+          '<div class="dato-d">Gobierno General <strong class="' + cls(u.gg.global) + '">' + PF.num(u.gg.global_pib, 1) + ' %</strong> del PIB · ' +
+          'Empresas Públicas <strong class="' + cls(u.ep.global) + '">' + PF.num(u.ep.global_pib, 1) + ' %</strong>.</div></div>';
+      }
+      const par = ind.parcial;
+      if (par && estado.sector === 'spnf') {
+        const hasta = PF.MESES_L[par.hasta_mes - 1];
+        const act = par.actual.resultado_global, ant = par.mismo_periodo_anterior.resultado_global;
+        h += '<div class="dato"><div class="dato-l">' + par.anio + ', enero a ' + hasta + '</div>' +
+          '<div class="dato-v ' + cls(act) + '">Bs ' + PF.num(act, 0) + '<small>millones</small></div>' +
+          '<div class="dato-d">En el mismo período de ' + (par.anio - 1) + ': <strong>Bs ' + PF.num(ant, 0) + ' millones</strong>. ' +
+          'Resultado primario ' + par.anio + ': Bs ' + PF.num(par.actual.resultado_primario, 0) + ' millones. ' +
+          'Se compara en bolivianos: el INE todavía no publica el PIB de ' + par.anio + '.</div></div>';
+      }
+      document.getElementById('lectura').innerHTML = h;
+    }
+    lectura();
+  }).catch(function (e) { PF.error(el, e); });
+})();
+</script>
+</body>
+</html>
