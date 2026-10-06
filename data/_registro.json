@@ -40,10 +40,10 @@
   "ultimo_dato": "2026-07"
  },
  "embi": {
-  "huella": "d30d89d6eb02cb10",
-  "observaciones_bolivia": 3459,
-  "revisado": "2026-10-02 17:59",
-  "ultimo_dato": "2026-10-01",
+  "huella": "b1c875984cf8319e",
+  "observaciones_bolivia": 3461,
+  "revisado": "2026-10-06 18:33",
+  "ultimo_dato": "2026-10-05",
   "url": "https://bcrdgdcprod.blob.core.windows.net/documents/entorno-internacional/documents/Serie_Historica_Spread_del_EMBI.xlsx"
  },
  "pib": {
