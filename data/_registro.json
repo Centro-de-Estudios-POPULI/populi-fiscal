@@ -40,11 +40,11 @@
   "ultimo_dato": "2026-07"
  },
  "embi": {
-  "huella": "abe37dbed4d44f30",
-  "observaciones_bolivia": 3481,
-  "revisado": "2026-11-04 19:58",
-  "ultimo_dato": "2026-11-03",
-  "url": "https://bcrdgdcprod.blob.core.windows.net/documents/entorno-internacional/documents/Serie_Historica_Spread_del_EMBI.xlsx"
+  "huella": "b7e9fd590130c4a4",
+  "observaciones_bolivia": 3482,
+  "revisado": "2026-11-05 20:13",
+  "ultimo_dato": "2026-11-04",
+  "url": "https://cdn.bancentral.gov.do/documents/entorno-internacional/documents/Serie_Historica_Spread_del_EMBI.xlsx"
  },
  "pib": {
   "huella": "d4a3752d368f6bac",
