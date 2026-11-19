@@ -36,7 +36,7 @@ CONCILIACIÓN BCB ↔ MEFP — Monitor Fiscal POPULI
    2025-06: MEFP    118,864 · BCB    125,765 · dif +6,901
    2025-12: MEFP    153,997 · BCB    160,903 · dif +6,906
    2026-06: MEFP    157,450 · BCB    165,371 · dif +7,921
-   2026-07: MEFP    158,245 · BCB    165,461 · dif +7,215
+   2026-08: MEFP    158,113 · BCB    164,968 · dif +6,855
    ⇒ el BCB registra SIEMPRE más: entre 6,147 y 7,921 MM Bs (media 6,820, 6.0% del crédito), sin tendencia.
    Las fuentes no permiten atribuir la brecha. Candidatos: intereses devengados no pagados o crédito del
    BCB a entidades del Gobierno Central distintas del TGN. NO es la deuda histórica (7.380, constante).
